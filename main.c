@@ -109,6 +109,18 @@ void update_pitch(struct dioxide *d) {
     printf("New pitch is %f\n", d->pitch);
 }
 
+long scale_pot_long(unsigned pot, long low, long high) {
+    long l = pot * (high - low);
+
+    return l / 127 + low;
+}
+
+double scale_pot_double(unsigned pot, double low, double high) {
+    float f = pot / 127.0;
+
+    return f * (high - low) + low;
+}
+
 void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     /* Oxygen pots and dials all go from 0 to 127. */
     switch (control.param) {
@@ -117,6 +129,18 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C2 */
         case 71:
+            break;
+        /* C10 */
+        case 75:
+            d->lpf.resonance = scale_pot_double(control.value,
+                sqrt(2), 0.1);
+            init_lpf_weights(d, &d->lpf);
+            break;
+        /* C11 */
+        case 76:
+            d->lpf.cutoff = scale_pot_long(control.value,
+                1, d->sample_rate / 4);
+            init_lpf_weights(d, &d->lpf);
             break;
         default:
             printf("Controller %d\n", control.param);
@@ -145,6 +169,8 @@ void poll_sequencer(struct dioxide *d) {
                 d->note_count++;
             }
 
+            update_pitch(d);
+
             break;
         case SND_SEQ_EVENT_NOTEOFF:
             if (!d->note_count) {
@@ -161,18 +187,20 @@ void poll_sequencer(struct dioxide *d) {
                 d->notes[i] = d->notes[i + 1];
             }
 
+            update_pitch(d);
+
             break;
         case SND_SEQ_EVENT_CONTROLLER:
             handle_controller(d, event->data.control);
+            break;
         case SND_SEQ_EVENT_PITCHBEND:
             d->pitch_bend = event->data.control.value;
+            update_pitch(d);
             break;
         default:
             printf("Got event type %u\n", type);
             break;
     }
-
-    update_pitch(d);
 
     if (d->note_count) {
         SDL_PauseAudio(0);
