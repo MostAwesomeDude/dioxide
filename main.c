@@ -128,6 +128,10 @@ void poll_sequencer(struct dioxide *d) {
 
             break;
         case SND_SEQ_EVENT_NOTEOFF:
+            if (!d->note_count) {
+                break;
+            }
+
             for (i = 0; i < d->note_count; i++) {
                 if (d->notes[i] == event->data.note.note) {
                     break;
