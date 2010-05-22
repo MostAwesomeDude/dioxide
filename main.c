@@ -54,8 +54,8 @@ void setup_sound(struct dioxide *d) {
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
-    double phase, step;
-    unsigned i, offset = 0;
+    double phase, step, accumulator;
+    unsigned i, j;
     int retval;
     short *buf = (short*)stream;
 
@@ -63,7 +63,13 @@ void write_sound(void *private, Uint8 *stream, int len) {
     step = 2 * M_PI * d->pitch / d->sample_rate;
 
     for (i = 0; i < len / 2; i++) {
-        *buf = sin(phase) * d->volume * 32767;
+        accumulator = 0;
+
+        for (j = 1; j < 5; j++) {
+            accumulator += sin(phase * j) / j;
+        }
+
+        *buf = -accumulator * d->volume * 32767;
         buf++;
         phase += step;
         if (phase >= 2 * M_PI) {
