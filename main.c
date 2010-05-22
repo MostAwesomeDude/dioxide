@@ -14,6 +14,8 @@ struct dioxide {
 
     double phase;
     double pitch;
+    unsigned notes[16];
+    unsigned note_count;
 };
 
 void setup_pcm(struct dioxide *d) {
@@ -29,7 +31,7 @@ void setup_pcm(struct dioxide *d) {
         exit(retval);
     }
 
-    d->sample_rate = 44100;
+    d->sample_rate = 22050;
 
     snd_pcm_hw_params_any(d->pcm, params);
     snd_pcm_hw_params_set_rate_resample(d->pcm, params, 0);
@@ -37,6 +39,8 @@ void setup_pcm(struct dioxide *d) {
         SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_channels(d->pcm, params, 1);
     snd_pcm_hw_params_set_rate_near(d->pcm, params, &d->sample_rate, 0);
+
+    snd_pcm_hw_params_set_format(d->pcm, params, SND_PCM_FORMAT_S16);
 
     snd_pcm_hw_params(d->pcm, params);
 
@@ -66,7 +70,7 @@ void write_pcm(struct dioxide *d) {
     double phase, step;
     unsigned i, offset = 0;
     int retval;
-    unsigned char ptr[10000];
+    signed short ptr[10000];
 
     available = snd_pcm_avail(d->pcm);
 
@@ -82,7 +86,7 @@ void write_pcm(struct dioxide *d) {
     step = 2 * M_PI * d->pitch / d->sample_rate;
 
     for (i = 0; i < available; i++) {
-        ptr[i] = (sin(phase) + 1) * 127;
+        ptr[i] = sin(phase) * 32767;
         phase += step;
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
