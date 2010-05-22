@@ -6,6 +6,8 @@ AC_PROG_CC
 
 PKG_CHECK_MODULES(ALSA, alsa)
 
+AM_PATH_SDL([1.2.0])
+
 AC_CONFIG_FILES([
     Makefile
 ])

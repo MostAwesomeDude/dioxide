@@ -3,6 +3,9 @@
 
 #include <asoundlib.h>
 
+#include "SDL.h"
+#include "SDL_audio.h"
+
 struct dioxide {
     snd_seq_t *seq;
     snd_pcm_t *pcm;
