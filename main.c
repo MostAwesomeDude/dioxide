@@ -1,10 +1,18 @@
 #include <math.h>
+#include <signal.h>
 #include <stdlib.h>
 
 #include <asoundlib.h>
 
 #include "SDL.h"
 #include "SDL_audio.h"
+
+static int time_to_quit = 0;
+
+void handle_sigint(int s) {
+    time_to_quit = 1;
+    printf("Caught SIGINT, quitting.\n");
+}
 
 struct dioxide {
     snd_seq_t *seq;
@@ -121,14 +129,18 @@ int main() {
     struct dioxide d = {0};
     int retval;
 
+    signal(SIGINT, handle_sigint);
+
     d.volume = 1;
 
     setup_sound(&d);
     setup_sequencer(&d);
 
-    while (1) {
+    while (!time_to_quit) {
         poll_sequencer(&d);
     }
+
+    SDL_CloseAudio();
 
     retval = snd_seq_close(d.seq);
     exit(retval);
