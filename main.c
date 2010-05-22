@@ -12,6 +12,7 @@ struct dioxide {
     snd_pcm_uframes_t period_frames;
     snd_pcm_format_t format;
 
+    double volume;
     double phase;
     double pitch;
     unsigned notes[16];
@@ -86,7 +87,7 @@ void write_pcm(struct dioxide *d) {
     step = 2 * M_PI * d->pitch / d->sample_rate;
 
     for (i = 0; i < available; i++) {
-        ptr[i] = sin(phase) * 32767;
+        ptr[i] = sin(phase) * d->volume * 32767;
         phase += step;
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
@@ -126,8 +127,6 @@ void setup_sequencer(struct dioxide *d) {
     snd_seq_create_simple_port(d->seq, "Dioxide",
         SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
         SND_SEQ_PORT_TYPE_MIDI_GENERIC);
-
-    d->pitch = 440;
 }
 
 void poll_sequencer(struct dioxide *d) {
@@ -144,12 +143,16 @@ void poll_sequencer(struct dioxide *d) {
     switch (type) {
         case SND_SEQ_EVENT_NOTEON:
             printf("Noteon %u\n", event->data.note.note);
+
             temp = (event->data.note.note - 69.0) / 12.0;
             d->pitch = 440 * pow(2, temp);
+            d->volume = 1;
+
             printf("New pitch is %f\n", d->pitch);
             break;
         case SND_SEQ_EVENT_NOTEOFF:
             printf("Noteoff %u\n", event->data.note.note);
+            d->volume = 0;
             break;
         default:
             printf("Got event type %u\n", type);
