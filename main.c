@@ -11,23 +11,6 @@ void handle_sigint(int s) {
     printf("Caught SIGINT, quitting.\n");
 }
 
-struct dioxide {
-    snd_seq_t *seq;
-
-    struct SDL_AudioSpec spec;
-
-    unsigned sample_rate;
-    snd_pcm_uframes_t buffer_frames;
-    snd_pcm_uframes_t period_frames;
-
-    double volume;
-    double phase;
-    double pitch;
-    signed short pitch_bend;
-    unsigned notes[16];
-    unsigned note_count;
-};
-
 void write_sound(void *private, Uint8 *stream, int len);
 
 void setup_sound(struct dioxide *d) {
@@ -132,15 +115,9 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C10 */
         case 75:
-            d->lpf.resonance = scale_pot_double(control.value,
-                sqrt(2), 0.1);
-            init_lpf_weights(d, &d->lpf);
             break;
         /* C11 */
         case 76:
-            d->lpf.cutoff = scale_pot_long(control.value,
-                1, d->sample_rate / 4);
-            init_lpf_weights(d, &d->lpf);
             break;
         default:
             printf("Controller %d\n", control.param);
