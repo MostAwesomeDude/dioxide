@@ -9,6 +9,7 @@ struct dioxide {
 
     unsigned sample_rate;
     snd_pcm_uframes_t buffer_frames;
+    snd_pcm_uframes_t period_frames;
     snd_pcm_format_t format;
 
     double phase;
@@ -39,12 +40,14 @@ void setup_pcm(struct dioxide *d) {
 
     snd_pcm_hw_params(d->pcm, params);
 
-    snd_pcm_hw_params_get_buffer_size(params, &d->buffer_frames);
+    snd_pcm_get_params(d->pcm, &d->buffer_frames, &d->period_frames);
     snd_pcm_hw_params_get_format(params, &d->format);
 
-    printf("Using sample rate %u, %u frames, format %s\n",
+    printf("Using sample rate %u, buffer %u frames, "
+        "period %u frames, format %s\n",
         d->sample_rate,
         d->buffer_frames,
+        d->period_frames,
         snd_pcm_format_description(d->format));
 
     if (retval) {
@@ -65,13 +68,15 @@ void write_pcm(struct dioxide *d) {
     int retval;
     unsigned char ptr[10000];
 
-    available = snd_pcm_avail_update(d->pcm);
+    available = snd_pcm_avail(d->pcm);
 
-    if (available < (unsigned)d->pitch * 2) {
+    if (available < d->period_frames) {
         return;
     }
 
-    available = (unsigned)d->pitch * 2;
+    if (available > 2 * d->period_frames) {
+        available = 2 * d->period_frames;
+    }
 
     phase = d->phase;
     step = 2 * M_PI * d->pitch / d->sample_rate;
