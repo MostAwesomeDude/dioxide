@@ -173,6 +173,7 @@ int main() {
         write_pcm(&d);
     }
 
+    snd_pcm_drain(d.pcm);
     snd_pcm_close(d.pcm);
     retval = snd_seq_close(d.seq);
     exit(retval);
