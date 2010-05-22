@@ -8,12 +8,12 @@
 
 struct dioxide {
     snd_seq_t *seq;
-    snd_pcm_t *pcm;
+
+    struct SDL_AudioSpec spec;
 
     unsigned sample_rate;
     snd_pcm_uframes_t buffer_frames;
     snd_pcm_uframes_t period_frames;
-    snd_pcm_format_t format;
 
     double volume;
     double phase;
@@ -22,94 +22,44 @@ struct dioxide {
     unsigned note_count;
 };
 
-void setup_pcm(struct dioxide *d) {
-    snd_pcm_hw_params_t *params;
-    int retval;
+void write_sound(void *private, Uint8 *stream, int len);
 
-    snd_pcm_hw_params_alloca(&params);
+void setup_sound(struct dioxide *d) {
+    struct SDL_AudioSpec *spec = &d->spec;
 
-    retval = snd_pcm_open(&d->pcm, "default", SND_PCM_STREAM_PLAYBACK, 0);
+    spec->freq = 22050;
+    spec->format = AUDIO_S16;
+    spec->channels = 1;
+    spec->samples = 512;
+    spec->callback = write_sound;
+    spec->userdata = d;
 
-    if (retval) {
-        printf("Couldn't open PCM: %s\n", snd_strerror(retval));
-        exit(retval);
+    if (SDL_OpenAudio(spec, NULL)) {
+        printf("Couldn't setup sound: %s\n", SDL_GetError());
+        exit(1);
     }
 
-    d->sample_rate = 22050;
-
-    snd_pcm_hw_params_any(d->pcm, params);
-    snd_pcm_hw_params_set_rate_resample(d->pcm, params, 0);
-    snd_pcm_hw_params_set_access(d->pcm, params,
-        SND_PCM_ACCESS_RW_INTERLEAVED);
-    snd_pcm_hw_params_set_channels(d->pcm, params, 1);
-    snd_pcm_hw_params_set_rate_near(d->pcm, params, &d->sample_rate, 0);
-
-    snd_pcm_hw_params_set_format(d->pcm, params, SND_PCM_FORMAT_S16);
-
-    snd_pcm_hw_params(d->pcm, params);
-
-    snd_pcm_get_params(d->pcm, &d->buffer_frames, &d->period_frames);
-    snd_pcm_hw_params_get_format(params, &d->format);
-
-    printf("Using sample rate %u, buffer %u frames, "
-        "period %u frames, format %s\n",
-        d->sample_rate,
-        d->buffer_frames,
-        d->period_frames,
-        snd_pcm_format_description(d->format));
-
-    if (retval) {
-        printf("Couldn't set PCM parameters: %s\n", snd_strerror(retval));
-        exit(retval);
-    }
-
-    snd_pcm_prepare(d->pcm);
-    snd_pcm_start(d->pcm);
-
+    d->sample_rate = spec->freq;
     d->phase = 0.0;
 }
 
-void write_pcm(struct dioxide *d) {
-    snd_pcm_sframes_t available;
+void write_sound(void *private, Uint8 *stream, int len) {
+    struct dioxide *d = private;
     double phase, step;
     unsigned i, offset = 0;
     int retval;
-    signed short ptr[10000];
-
-    available = snd_pcm_avail(d->pcm);
-
-    if (available < d->period_frames) {
-        return;
-    }
-
-    if (available > 2 * d->period_frames) {
-        available = 2 * d->period_frames;
-    }
+    short *buf = (short*)stream;
 
     phase = d->phase;
     step = 2 * M_PI * d->pitch / d->sample_rate;
 
-    for (i = 0; i < available; i++) {
-        ptr[i] = sin(phase) * d->volume * 32767;
+    for (i = 0; i < len / 2; i++) {
+        *buf = sin(phase) * d->volume * 32767;
+        buf++;
         phase += step;
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
         }
-    }
-
-    while (available > 0) {
-        retval = snd_pcm_writei(d->pcm, ptr + offset, available);
-
-        if (retval < 0) {
-            printf("Couldn't writei: %s\n", snd_strerror(retval));
-            printf("State: %s\n",
-                snd_pcm_state_name(snd_pcm_state(d->pcm)));
-            snd_pcm_prepare(d->pcm);
-            retval = 0;
-        }
-
-        available -= retval;
-        offset += retval;
     }
 
     d->phase = phase;
@@ -150,13 +100,16 @@ void poll_sequencer(struct dioxide *d) {
 
             temp = (event->data.note.note - 69.0) / 12.0;
             d->pitch = 440 * pow(2, temp);
-            d->volume = 1;
+
+            SDL_PauseAudio(0);
 
             printf("New pitch is %f\n", d->pitch);
             break;
         case SND_SEQ_EVENT_NOTEOFF:
             printf("Noteoff %u\n", event->data.note.note);
-            d->volume = 0;
+
+            SDL_PauseAudio(1);
+
             break;
         default:
             printf("Got event type %u\n", type);
@@ -168,16 +121,15 @@ int main() {
     struct dioxide d = {0};
     int retval;
 
-    setup_pcm(&d);
+    d.volume = 1;
+
+    setup_sound(&d);
     setup_sequencer(&d);
 
     while (1) {
         poll_sequencer(&d);
-        write_pcm(&d);
     }
 
-    snd_pcm_drain(d.pcm);
-    snd_pcm_close(d.pcm);
     retval = snd_seq_close(d.seq);
     exit(retval);
 }
