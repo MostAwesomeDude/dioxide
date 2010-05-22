@@ -2,10 +2,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#include <asoundlib.h>
-
-#include "SDL.h"
-#include "SDL_audio.h"
+#include "dioxide.h"
 
 static int time_to_quit = 0;
 

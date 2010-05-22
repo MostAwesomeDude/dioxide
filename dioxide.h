@@ -8,6 +8,15 @@ struct lfo {
     unsigned rate;
 };
 
+struct lpf {
+    double a, b, c, d;
+    double sample_prev, sample_ancient;
+    double retval_prev, retval_ancient;
+
+    double resonance;
+    double cutoff;
+};
+
 struct dioxide {
     snd_seq_t *seq;
 
@@ -25,6 +34,7 @@ struct dioxide {
     unsigned note_count;
 
     struct lfo vibrato;
+    struct lpf lpf;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo);
