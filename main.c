@@ -106,6 +106,22 @@ void update_pitch(struct dioxide *d) {
     printf("New pitch is %f\n", d->pitch);
 }
 
+void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
+    /* Oxygen pots and dials all go from 0 to 127. */
+    switch (control.param) {
+        /* C1 */
+        case 74:
+            break;
+        /* C2 */
+        case 71:
+            break;
+        default:
+            printf("Controller %d\n", control.param);
+            printf("Value %d\n", control.value);
+            break;
+    }
+}
+
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
@@ -143,6 +159,8 @@ void poll_sequencer(struct dioxide *d) {
             }
 
             break;
+        case SND_SEQ_EVENT_CONTROLLER:
+            handle_controller(d, event->data.control);
         case SND_SEQ_EVENT_PITCHBEND:
             d->pitch_bend = event->data.control.value;
             break;
