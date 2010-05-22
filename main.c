@@ -101,7 +101,8 @@ void write_pcm(struct dioxide *d) {
             printf("Couldn't writei: %s\n", snd_strerror(retval));
             printf("State: %s\n",
                 snd_pcm_state_name(snd_pcm_state(d->pcm)));
-            return;
+            snd_pcm_prepare(d->pcm);
+            retval = 0;
         }
 
         available -= retval;
