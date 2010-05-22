@@ -65,7 +65,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
 
-        for (j = 1; j < 5; j++) {
+        for (j = 1; j < 2; j++) {
             accumulator += sin(phase * j) / j;
         }
 
