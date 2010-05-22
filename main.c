@@ -94,7 +94,7 @@ void setup_sequencer(struct dioxide *d) {
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
-    double temp;
+    unsigned i;
 
     if (snd_seq_event_input(d->seq, &event) == -EAGAIN) {
         return;
@@ -106,22 +106,40 @@ void poll_sequencer(struct dioxide *d) {
         case SND_SEQ_EVENT_NOTEON:
             printf("Noteon %u\n", event->data.note.note);
 
-            temp = (event->data.note.note - 69.0) / 12.0;
-            d->pitch = 440 * pow(2, temp);
+            if (d->note_count >= 16) {
+                printf("Warning: Too many notes held, ignoring noteon.\n");
+            } else {
+                d->notes[d->note_count] = event->data.note.note;
+                d->note_count++;
+            }
 
-            SDL_PauseAudio(0);
-
-            printf("New pitch is %f\n", d->pitch);
             break;
         case SND_SEQ_EVENT_NOTEOFF:
             printf("Noteoff %u\n", event->data.note.note);
 
-            SDL_PauseAudio(1);
+            for (i = 0; i < d->note_count; i++) {
+                if (d->notes[i] == event->data.note.note) {
+                    break;
+                }
+            }
+            d->note_count--;
+            for (i; i < d->note_count; i++) {
+                d->notes[i] = d->notes[i + 1];
+            }
 
             break;
         default:
             printf("Got event type %u\n", type);
             break;
+    }
+
+    if (d->note_count) {
+        d->pitch = 440 * pow(2, (d->notes[d->note_count - 1] - 69.0) / 12.0);
+        printf("New pitch is %f\n", d->pitch);
+
+        SDL_PauseAudio(0);
+    } else {
+        SDL_PauseAudio(1);
     }
 }
 
