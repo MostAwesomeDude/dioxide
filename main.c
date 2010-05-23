@@ -44,7 +44,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     double phase, step, accumulator;
     unsigned i, j;
     int retval;
-    short *buf = (short*)stream;
+    signed short *buf = (signed short*)stream;
 
     phase = d->phase;
     step = 2 * M_PI * d->pitch / d->spec.freq;
@@ -56,7 +56,15 @@ void write_sound(void *private, Uint8 *stream, int len) {
             accumulator += sin(phase * j) / j;
         }
 
-        *buf = -accumulator * d->volume * 32767;
+        accumulator *= d->volume * -32767;
+
+        if (accumulator > 32767) {
+            accumulator = 32767;
+        } else if (accumulator < -32768) {
+            accumulator = -32768;
+        }
+
+        *buf = (signed short)accumulator;
         buf++;
         phase += step;
         if (phase >= 2 * M_PI) {
