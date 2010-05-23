@@ -73,15 +73,12 @@ void write_sound(void *private, Uint8 *stream, int len) {
     }
 
     phase = d->phase;
-    step = 2 * M_PI * (d->pitch * accumulator) / d->spec.freq;
+    step = M_PI * (d->pitch * accumulator) / d->spec.freq;
 
     if (d->rudess) {
         rudess_phase = d->rudess_phase;
         rudess_step = step * twelve_cents;
     }
-
-    printf("phase %f step %f\n", phase, step);
-    printf("rudess phase %f step %f\n", rudess_phase, rudess_step);
 
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
@@ -98,6 +95,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
         }
 
         accumulator *= d->volume * -32767 / d->draws;
+
+        if (d->rudess) {
+            accumulator *= 0.5;
+        }
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -152,7 +153,6 @@ void update_pitch(struct dioxide *d) {
     note += d->pitch_bend * (2.0 / 8192.0);
 
     d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
-    printf("New pitch is %f\n", d->pitch);
 }
 
 void update_draws(struct dioxide *d) {
