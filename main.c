@@ -52,7 +52,7 @@ void setup_sound(struct dioxide *d) {
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
     double phase, step, accumulator;
-    unsigned i, j;
+    unsigned i, j, draws = 0;
     int retval;
     signed short *buf = (signed short*)stream;
 
@@ -65,11 +65,11 @@ void write_sound(void *private, Uint8 *stream, int len) {
         for (j = 0; j < 9; j++) {
             if (d->drawbars[j].stop) {
                 accumulator += d->drawbars[j].stop *
-                    sin(phase * d->drawbars[j].harmonic) * 0.125;
+                    sin(phase * d->drawbars[j].harmonic);
             }
         }
 
-        accumulator *= d->volume * -32767;
+        accumulator *= d->volume * -32767 / d->draws;
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -118,6 +118,16 @@ void update_pitch(struct dioxide *d) {
 
     d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
     printf("New pitch is %f\n", d->pitch);
+}
+
+void update_draws(struct dioxide *d) {
+    unsigned i;
+
+    d->draws = 0;
+
+    for (i = 0; i < 9; i++) {
+        d->draws += d->drawbars[i].stop;
+    }
 }
 
 long scale_pot_long(unsigned pot, long low, long high) {
@@ -229,6 +239,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
         case SND_SEQ_EVENT_CONTROLLER:
             handle_controller(d, event->data.control);
+            update_draws(d);
             break;
         case SND_SEQ_EVENT_PITCHBEND:
             d->pitch_bend = event->data.control.value;
@@ -239,7 +250,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
     }
 
-    if (d->note_count) {
+    if (d->note_count && d->draws) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);

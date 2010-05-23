@@ -38,8 +38,9 @@ struct dioxide {
 
     struct {
         unsigned harmonic;
-        double stop;
+        unsigned stop;
     } drawbars[8];
+    unsigned draws;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo);
