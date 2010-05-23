@@ -16,7 +16,7 @@ void write_sound(void *private, Uint8 *stream, int len);
 void setup_sound(struct dioxide *d) {
     struct SDL_AudioSpec *spec = &d->spec;
 
-    spec->freq = 22050;
+    spec->freq = 48000;
     spec->format = AUDIO_S16;
     spec->channels = 1;
     spec->samples = 512;
@@ -44,7 +44,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
 
-        for (j = 1; j < 2; j++) {
+        for (j = 1; j * d->pitch < d->spec.freq; j++) {
             accumulator += sin(phase * j) / j;
         }
 
