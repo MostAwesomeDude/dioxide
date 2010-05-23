@@ -36,6 +36,7 @@ void setup_sound(struct dioxide *d) {
     wanted->samples = actual.samples;
 
     d->phase = 0.0;
+    d->volume = 0.7;
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -115,6 +116,8 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
+            d->volume = scale_pot_double(control.value, 0.0, 1.0);
+            printf("Volume %f\n", d->volume);
             break;
         /* C2 */
         case 71:
