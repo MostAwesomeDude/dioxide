@@ -14,19 +14,26 @@ void handle_sigint(int s) {
 void write_sound(void *private, Uint8 *stream, int len);
 
 void setup_sound(struct dioxide *d) {
-    struct SDL_AudioSpec *spec = &d->spec;
+    struct SDL_AudioSpec actual, *wanted = &d->spec;
 
-    spec->freq = 48000;
-    spec->format = AUDIO_S16;
-    spec->channels = 1;
-    spec->samples = 512;
-    spec->callback = write_sound;
-    spec->userdata = d;
+    wanted->freq = 48000;
+    wanted->format = AUDIO_S16;
+    wanted->channels = 1;
+    wanted->samples = 512;
+    wanted->callback = write_sound;
+    wanted->userdata = d;
 
-    if (SDL_OpenAudio(spec, NULL)) {
+    if (SDL_OpenAudio(wanted, &actual)) {
         printf("Couldn't setup sound: %s\n", SDL_GetError());
         exit(1);
     }
+
+    printf("Opened sound for playback: Rate %d, format %d, samples %d\n",
+        actual.freq, actual.format, actual.samples);
+
+    wanted->freq = actual.freq;
+    wanted->format = actual.format;
+    wanted->samples = actual.samples;
 
     d->phase = 0.0;
 }
