@@ -5,7 +5,10 @@
 
 struct lfo {
     double phase;
-    unsigned rate;
+
+    double rate;
+    double center;
+    double amplitude;
 };
 
 struct lpf {

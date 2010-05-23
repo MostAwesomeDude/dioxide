@@ -47,6 +47,12 @@ void setup_sound(struct dioxide *d) {
     d->drawbars[6].harmonic = 10;
     d->drawbars[7].harmonic = 12;
     d->drawbars[8].harmonic = 16;
+
+    /* 2 ** (cents/1200) */
+    static double twelve_cents = 1.0069555500567189;
+
+    d->vibrato.center = 1;
+    d->vibrato.amplitude = twelve_cents - 1;
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -56,8 +62,18 @@ void write_sound(void *private, Uint8 *stream, int len) {
     int retval;
     signed short *buf = (signed short*)stream;
 
+    accumulator = step_lfo(d, &d->vibrato, len);
+
+    if (accumulator == 0.0) {
+        accumulator = 1;
+    }
+
+    printf("lfo %f\n", accumulator);
+
     phase = d->phase;
-    step = 2 * M_PI * d->pitch / d->spec.freq;
+    step = 2 * M_PI * (d->pitch * accumulator) / d->spec.freq;
+
+    printf("phase %f step %f\n", phase, step);
 
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
@@ -188,6 +204,10 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C11 */
         case 76:
+            break;
+        /* C34 */
+        case 1:
+            d->vibrato.rate = scale_pot_double(control.value, 0.01, 5);
             break;
         default:
             printf("Controller %d\n", control.param);
