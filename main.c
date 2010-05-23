@@ -6,6 +6,9 @@
 
 static int time_to_quit = 0;
 
+/* 2 ** (cents/1200) */
+static double twelve_cents = 1.0069555500567189;
+
 void handle_sigint(int s) {
     time_to_quit = 1;
     printf("Caught SIGINT, quitting.\n");
@@ -48,16 +51,17 @@ void setup_sound(struct dioxide *d) {
     d->drawbars[7].harmonic = 12;
     d->drawbars[8].harmonic = 16;
 
-    /* 2 ** (cents/1200) */
-    static double twelve_cents = 1.0069555500567189;
-
     d->vibrato.center = 1;
     d->vibrato.amplitude = twelve_cents - 1;
+
+    d->rudess = 0;
+    d->rudess_phase = 0.0;
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
     double phase, step, accumulator;
+    double rudess_phase, rudess_step;
     unsigned i, j, draws = 0;
     int retval;
     signed short *buf = (signed short*)stream;
@@ -68,12 +72,16 @@ void write_sound(void *private, Uint8 *stream, int len) {
         accumulator = 1;
     }
 
-    printf("lfo %f\n", accumulator);
-
     phase = d->phase;
     step = 2 * M_PI * (d->pitch * accumulator) / d->spec.freq;
 
+    if (d->rudess) {
+        rudess_phase = d->rudess_phase;
+        rudess_step = step * twelve_cents;
+    }
+
     printf("phase %f step %f\n", phase, step);
+    printf("rudess phase %f step %f\n", rudess_phase, rudess_step);
 
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
@@ -82,6 +90,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
             if (d->drawbars[j].stop) {
                 accumulator += d->drawbars[j].stop *
                     sin(phase * d->drawbars[j].harmonic);
+                if (d->rudess) {
+                    accumulator += d->drawbars[j].stop *
+                        sin(rudess_phase * d->drawbars[j].harmonic);
+                }
             }
         }
 
@@ -99,9 +111,16 @@ void write_sound(void *private, Uint8 *stream, int len) {
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
         }
+        rudess_phase += rudess_step;
+        if (rudess_phase >= 2 * M_PI) {
+            rudess_phase -= 2 * M_PI;
+        }
     }
 
     d->phase = phase;
+    if (d->rudess) {
+        d->rudess_phase = rudess_phase;
+    }
 }
 
 void setup_sequencer(struct dioxide *d) {
@@ -216,6 +235,17 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     }
 }
 
+void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
+    switch (control.value) {
+        /* C18 */
+        case 0:
+            d->rudess = !d->rudess;
+            break;
+        default:
+            break;
+    }
+}
+
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
@@ -270,6 +300,9 @@ void poll_sequencer(struct dioxide *d) {
         case SND_SEQ_EVENT_CONTROLLER:
             handle_controller(d, event->data.control);
             update_draws(d);
+            break;
+        case SND_SEQ_EVENT_PGMCHANGE:
+            handle_program_change(d, event->data.control);
             break;
         case SND_SEQ_EVENT_PITCHBEND:
             d->pitch_bend = event->data.control.value;

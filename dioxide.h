@@ -40,6 +40,9 @@ struct dioxide {
         unsigned stop;
     } drawbars[8];
     unsigned draws;
+
+    int rudess;
+    double rudess_phase;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
