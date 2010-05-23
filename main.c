@@ -28,7 +28,6 @@ void setup_sound(struct dioxide *d) {
         exit(1);
     }
 
-    d->sample_rate = spec->freq;
     d->phase = 0.0;
 }
 
@@ -40,7 +39,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     short *buf = (short*)stream;
 
     phase = d->phase;
-    step = 2 * M_PI * d->pitch / d->sample_rate;
+    step = 2 * M_PI * d->pitch / d->spec.freq;
 
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
