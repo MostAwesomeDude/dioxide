@@ -35,6 +35,11 @@ struct dioxide {
 
     struct lfo vibrato;
     struct lpf lpf;
+
+    struct {
+        unsigned harmonic;
+        double stop;
+    } drawbars[8];
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo);

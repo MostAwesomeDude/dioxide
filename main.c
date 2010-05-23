@@ -37,6 +37,16 @@ void setup_sound(struct dioxide *d) {
 
     d->phase = 0.0;
     d->volume = 0.7;
+
+    d->drawbars[0].harmonic = 1;
+    d->drawbars[1].harmonic = 3;
+    d->drawbars[2].harmonic = 2;
+    d->drawbars[3].harmonic = 4;
+    d->drawbars[4].harmonic = 6;
+    d->drawbars[5].harmonic = 8;
+    d->drawbars[6].harmonic = 10;
+    d->drawbars[7].harmonic = 12;
+    d->drawbars[8].harmonic = 16;
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -52,8 +62,11 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len / 2; i++) {
         accumulator = 0;
 
-        for (j = 1; j * d->pitch < d->spec.freq; j++) {
-            accumulator += sin(phase * j) / j;
+        for (j = 0; j < 9; j++) {
+            if (d->drawbars[j].stop) {
+                accumulator += d->drawbars[j].stop *
+                    sin(phase * d->drawbars[j].harmonic) * 0.125;
+            }
         }
 
         accumulator *= d->volume * -32767;
@@ -124,14 +137,44 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
-            d->volume = scale_pot_double(control.value, 0.0, 1.0);
-            printf("Volume %f\n", d->volume);
+            d->drawbars[0].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C2 */
         case 71:
+            d->drawbars[1].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C3 */
+        case 91:
+            d->drawbars[2].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C4 */
+        case 93:
+            d->drawbars[3].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C5 */
+        case 73:
+            d->drawbars[4].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C6 */
+        case 72:
+            d->drawbars[5].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C7 */
+        case 5:
+            d->drawbars[6].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C8 */
+        case 84:
+            d->drawbars[7].stop = scale_pot_long(control.value, 0, 8);
+            break;
+        /* C9 */
+        case 7:
+            d->drawbars[8].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C10 */
         case 75:
+            d->volume = scale_pot_double(control.value, 0.0, 1.0);
+            printf("Volume %f\n", d->volume);
             break;
         /* C11 */
         case 76:
