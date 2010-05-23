@@ -22,10 +22,6 @@ struct dioxide {
 
     struct SDL_AudioSpec spec;
 
-    unsigned sample_rate;
-    snd_pcm_uframes_t buffer_frames;
-    snd_pcm_uframes_t period_frames;
-
     double volume;
     double phase;
     double pitch;
@@ -43,4 +39,4 @@ struct dioxide {
     unsigned draws;
 };
 
-double step_lfo(struct dioxide *d, struct lfo *lfo);
+double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
