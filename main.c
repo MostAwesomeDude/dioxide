@@ -199,7 +199,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
-    unsigned i;
+    unsigned i, break_flag = 0;
 
     if (snd_seq_event_input(d->seq, &event) == -EAGAIN) {
         return;
@@ -212,6 +212,16 @@ void poll_sequencer(struct dioxide *d) {
             if (d->note_count >= 16) {
                 printf("Warning: Too many notes held, ignoring noteon.\n");
             } else {
+                for (i = 0; i < d->note_count; i++) {
+                    if (d->notes[i] == event->data.note.note) {
+                        break_flag = 1;
+                        break;
+                    }
+                }
+                if (break_flag) {
+                    break;
+                }
+
                 d->notes[d->note_count] = event->data.note.note;
                 d->note_count++;
             }
