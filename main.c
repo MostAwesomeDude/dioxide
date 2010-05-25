@@ -140,13 +140,21 @@ void setup_sequencer(struct dioxide *d) {
 
 void update_pitch(struct dioxide *d) {
     double note;
+    double bend;
 
     if (!d->note_count) {
         return;
     }
 
+    /* Split the pitch wheel into an upper and lower range. */
+    if (d->pitch_bend >= 0) {
+        bend = d->pitch_bend * (2.0 / 8192.0);
+    } else {
+        bend = d->pitch_bend * (12.0 / 8192.0);
+    }
+
     note = d->notes[d->note_count - 1];
-    note += d->pitch_bend * (2.0 / 8192.0);
+    note += bend;
 
     d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
 }
