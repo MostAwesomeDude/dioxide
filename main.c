@@ -38,7 +38,6 @@ void setup_sound(struct dioxide *d) {
     wanted->format = actual.format;
     wanted->samples = actual.samples;
 
-    d->phase = 0.0;
     d->volume = 0.7;
 
     d->drawbars[0].harmonic = 1;
@@ -53,9 +52,6 @@ void setup_sound(struct dioxide *d) {
 
     d->vibrato.center = 1;
     d->vibrato.amplitude = twelve_cents - 1;
-
-    d->rudess = 0;
-    d->rudess_phase = 0.0;
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -321,22 +317,27 @@ void poll_sequencer(struct dioxide *d) {
 }
 
 int main() {
-    struct dioxide d = {0};
+    struct dioxide *d = calloc(1, sizeof(struct dioxide));
     int retval;
 
     signal(SIGINT, handle_sigint);
 
-    d.volume = 1;
+    if (d == NULL) {
+        exit(EXIT_FAILURE);
+    }
 
-    setup_sound(&d);
-    setup_sequencer(&d);
+    setup_sound(d);
+    setup_sequencer(d);
 
     while (!time_to_quit) {
-        poll_sequencer(&d);
+        poll_sequencer(d);
     }
 
     SDL_CloseAudio();
 
-    retval = snd_seq_close(d.seq);
+    retval = snd_seq_close(d->seq);
+
+    free(d);
+
     exit(retval);
 }
