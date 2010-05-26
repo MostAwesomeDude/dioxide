@@ -57,7 +57,8 @@ void setup_sound(struct dioxide *d) {
     d->vibrato.center = 1;
     d->vibrato.amplitude = twelve_cents - 1;
 
-    printf("Initialized basic synth parameters\n");
+    printf("Initialized basic synth parameters, frame length is %d usec\n",
+        (1000 * 1000 * actual.samples / actual.freq));
 
     printf("Precalculating FFTs, please hold...\n");
 
@@ -158,7 +159,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
         now.tv_sec += 1000 * 1000;
     }
 
-    if (now.tv_usec > then.tv_usec + 500) {
+    if (now.tv_usec > then.tv_usec + (1000 * 1000 * len / d->spec.freq)) {
         printf("Long frame: %d usec\n", now.tv_usec - then.tv_usec);
     }
 }
