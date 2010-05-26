@@ -2,6 +2,8 @@
 
 #include <fftw3.h>
 
+#include <ladspa.h>
+
 #include "SDL.h"
 #include "SDL_audio.h"
 
@@ -51,6 +53,11 @@ struct dioxide {
     fftw_plan fft_plan, ifft_plan;
 
     double lpf_cutoff;
+
+    LADSPA_Descriptor **plugin_list;
+    unsigned plugin_count;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
+
+void setup_plugins(struct dioxide *d);

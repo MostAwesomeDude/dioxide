@@ -443,6 +443,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    setup_plugins(d);
     setup_sound(d);
     setup_sequencer(d);
 
