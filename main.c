@@ -8,6 +8,8 @@ static int time_to_quit = 0;
 
 /* 2 ** (cents/1200) */
 static double twelve_cents = 1.0069555500567189;
+static double six_cents_up = 1.0034717485095028;
+static double six_cents_down = 0.99654026282786778;
 
 void handle_sigint(int s) {
     time_to_quit = 1;
@@ -57,7 +59,7 @@ void setup_sound(struct dioxide *d) {
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
     double phase, step, accumulator;
-    double rudess_phase, rudess_step;
+    double second_phase, second_step;
     unsigned i, j, draws = 0;
     int retval;
     signed short *buf = (signed short*)stream;
@@ -72,8 +74,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
     step = M_PI * (d->pitch * accumulator) / d->spec.freq;
 
     if (d->rudess) {
-        rudess_phase = d->rudess_phase;
-        rudess_step = step * twelve_cents;
+        second_phase = d->second_phase;
+        second_step = step * six_cents_up;
+        step *= six_cents_down;
     }
 
     for (i = 0; i < len / 2; i++) {
@@ -85,7 +88,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
                     sin(phase * d->drawbars[j].harmonic);
                 if (d->rudess) {
                     accumulator += d->drawbars[j].stop *
-                        sin(rudess_phase * d->drawbars[j].harmonic);
+                        sin(second_phase * d->drawbars[j].harmonic);
                 }
             }
         }
@@ -108,15 +111,15 @@ void write_sound(void *private, Uint8 *stream, int len) {
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
         }
-        rudess_phase += rudess_step;
-        if (rudess_phase >= 2 * M_PI) {
-            rudess_phase -= 2 * M_PI;
+        second_phase += second_step;
+        if (second_phase >= 2 * M_PI) {
+            second_phase -= 2 * M_PI;
         }
     }
 
     d->phase = phase;
     if (d->rudess) {
-        d->rudess_phase = rudess_phase;
+        d->second_phase = second_phase;
     }
 }
 

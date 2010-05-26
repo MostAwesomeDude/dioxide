@@ -42,7 +42,7 @@ struct dioxide {
     unsigned draws;
 
     int rudess;
-    double rudess_phase;
+    double second_phase;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
