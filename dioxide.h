@@ -1,5 +1,7 @@
 #include <asoundlib.h>
 
+#include <fftw3.h>
+
 #include "SDL.h"
 #include "SDL_audio.h"
 
@@ -43,6 +45,10 @@ struct dioxide {
 
     int rudess;
     double second_phase;
+
+    double *fft_in;
+    fftw_complex *fft_out;
+    fftw_plan fft_plan, ifft_plan;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);

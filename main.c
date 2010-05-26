@@ -56,6 +56,19 @@ void setup_sound(struct dioxide *d) {
 
     d->vibrato.center = 1;
     d->vibrato.amplitude = twelve_cents - 1;
+
+    printf("Initialized basic synth parameters\n");
+
+    printf("Precalculating FFTs, please hold...\n");
+
+    d->fft_in = fftw_malloc(actual.samples * sizeof(double));
+    d->fft_out = fftw_malloc((actual.samples / 2 + 1) * sizeof(fftw_complex));
+    d->fft_plan = fftw_plan_dft_r2c_1d(actual.samples,
+        d->fft_in, d->fft_out, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
+    d->ifft_plan = fftw_plan_dft_c2r_1d(actual.samples,
+        d->fft_out, d->fft_in, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
+
+    printf("Calculated FFTs\n");
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -102,11 +115,26 @@ void write_sound(void *private, Uint8 *stream, int len) {
             }
         }
 
-        accumulator *= d->volume * -32767 / d->draws;
-
         if (d->rudess) {
             accumulator *= 0.5;
         }
+
+        phase += step;
+        if (phase >= 2 * M_PI) {
+            phase -= 2 * M_PI;
+        }
+        second_phase += second_step;
+        if (second_phase >= 2 * M_PI) {
+            second_phase -= 2 * M_PI;
+        }
+
+        d->fft_in[i] = accumulator;
+    }
+
+    for (i = 0; i < len; i++) {
+        accumulator = d->fft_in[i];
+
+        accumulator *= d->volume * -32767 / d->draws;
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -116,14 +144,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         *buf = (signed short)accumulator;
         buf++;
-        phase += step;
-        if (phase >= 2 * M_PI) {
-            phase -= 2 * M_PI;
-        }
-        second_phase += second_step;
-        if (second_phase >= 2 * M_PI) {
-            second_phase -= 2 * M_PI;
-        }
     }
 
     d->phase = phase;
