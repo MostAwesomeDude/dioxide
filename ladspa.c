@@ -7,6 +7,7 @@ void open_plugin(struct dioxide *d, const char *name) {
     void* handle;
     LADSPA_Descriptor_Function ladspa_descriptor;
     const LADSPA_Descriptor *desc;
+    struct ladspa_plugin *plugin, *iter;
     unsigned i = 0;
 
     handle = dlopen(name, RTLD_NOW | RTLD_LOCAL);
@@ -23,15 +24,22 @@ void open_plugin(struct dioxide *d, const char *name) {
         return;
     }
 
-    if (d->plugin_list == NULL) {
-        d->plugin_list = calloc(16, sizeof(LADSPA_Descriptor*));
-        d->plugin_count = 0;
-    }
-
     while (desc = ladspa_descriptor(i)) {
+        plugin = calloc(1, sizeof(struct ladspa_plugin));
+        plugin->desc = desc;
+
+        /* Stash the plugin. */
+        if (d->available_plugins == NULL) {
+            d->available_plugins = plugin;
+            plugin->prev = plugin->next = plugin;
+        } else {
+            iter = d->available_plugins->prev;
+            iter->next = d->available_plugins->prev = plugin;
+            plugin->prev = iter;
+            plugin->next = d->available_plugins;
+        }
+
         printf("Loaded plugin %s\n", desc->Name);
-        d->plugin_list[d->plugin_count] = desc;
-        d->plugin_count++;
         i++;
     }
 }

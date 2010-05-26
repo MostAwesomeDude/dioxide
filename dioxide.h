@@ -24,6 +24,11 @@ struct lpf {
     double cutoff;
 };
 
+struct ladspa_plugin {
+    LADSPA_Descriptor *desc;
+    struct ladspa_plugin *prev, *next;
+};
+
 struct dioxide {
     snd_seq_t *seq;
 
@@ -54,8 +59,8 @@ struct dioxide {
 
     double lpf_cutoff;
 
-    LADSPA_Descriptor **plugin_list;
-    unsigned plugin_count;
+    struct ladspa_plugin *available_plugins;
+    struct ladspa_plugin *plugin_chain;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
