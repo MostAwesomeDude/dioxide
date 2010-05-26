@@ -64,6 +64,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
     int retval;
     signed short *buf = (signed short*)stream;
 
+    /* Treat len and buf as counting shorts, not bytes.
+     * Avoids cognitive dissonance in later code. */
+    len /= 2;
+
     accumulator = step_lfo(d, &d->vibrato, len);
 
     if (accumulator == 0.0) {
@@ -79,7 +83,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
         step *= six_cents_down;
     }
 
-    for (i = 0; i < len / 2; i++) {
+    for (i = 0; i < len; i++) {
         accumulator = 0;
 
         for (j = 0; j < 9; j++) {
