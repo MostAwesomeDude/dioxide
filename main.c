@@ -2,6 +2,8 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#include <sys/time.h>
+
 #include "dioxide.h"
 
 static int time_to_quit = 0;
@@ -63,6 +65,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
     unsigned i, j, draws = 0;
     int retval;
     signed short *buf = (signed short*)stream;
+    struct timeval then, now;
+
+    gettimeofday(&then, NULL);
 
     /* Treat len and buf as counting shorts, not bytes.
      * Avoids cognitive dissonance in later code. */
@@ -124,6 +129,17 @@ void write_sound(void *private, Uint8 *stream, int len) {
     d->phase = phase;
     if (d->rudess) {
         d->second_phase = second_phase;
+    }
+
+    gettimeofday(&now, NULL);
+
+    while (now.tv_sec != then.tv_sec) {
+        now.tv_sec--;
+        now.tv_sec += 1000 * 1000;
+    }
+
+    if (now.tv_usec > then.tv_usec + 500) {
+        printf("Long frame: %d usec\n", now.tv_usec - then.tv_usec);
     }
 }
 
