@@ -47,7 +47,7 @@ struct dioxide {
     double second_phase;
 
     double *fft_in;
-    fftw_complex *fft_out;
+    fftw_complex *fft_out, *lpf_fft;
     fftw_plan fft_plan, ifft_plan;
 };
 

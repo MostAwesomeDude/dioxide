@@ -1,3 +1,4 @@
+#include <complex.h>
 #include <math.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -22,6 +23,8 @@ void write_sound(void *private, Uint8 *stream, int len);
 
 void setup_sound(struct dioxide *d) {
     struct SDL_AudioSpec actual, *wanted = &d->spec;
+    double temp;
+    unsigned i;
 
     wanted->freq = 48000;
     wanted->format = AUDIO_S16;
@@ -65,9 +68,30 @@ void setup_sound(struct dioxide *d) {
     d->fft_in = fftw_malloc(actual.samples * sizeof(double));
     d->fft_out = fftw_malloc((actual.samples / 2 + 1) * sizeof(fftw_complex));
     d->fft_plan = fftw_plan_dft_r2c_1d(actual.samples,
-        d->fft_in, d->fft_out, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
+        d->fft_in, d->fft_out, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
     d->ifft_plan = fftw_plan_dft_c2r_1d(actual.samples,
-        d->fft_out, d->fft_in, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
+        d->fft_out, d->fft_in, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
+
+    d->lpf_fft = malloc((actual.samples / 2 + 1) * sizeof(fftw_complex));
+
+/*
+    for (i = 0; i < actual.samples; i++) {
+        temp = (double)i / actual.samples;
+        d->fft_in[i] = sin(temp) / temp;
+    }
+
+    fftw_execute(d->fft_plan);
+
+    memcpy(d->lpf_fft, d->fft_out,
+        (actual.samples / 2 + 1) * sizeof(fftw_complex));
+*/
+
+    /* Remove the discontinuity at x = 0. */
+    d->lpf_fft[0] = 1;
+    for (i = 1; i < actual.samples / 2 + 1; i++) {
+        temp = i * M_PI / (actual.samples / 2 + 1);
+        d->lpf_fft[i] = sin(temp) / temp;
+    }
 
     printf("Calculated FFTs\n");
 }
@@ -124,18 +148,33 @@ void write_sound(void *private, Uint8 *stream, int len) {
         if (phase >= 2 * M_PI) {
             phase -= 2 * M_PI;
         }
-        second_phase += second_step;
-        if (second_phase >= 2 * M_PI) {
-            second_phase -= 2 * M_PI;
+        if (d->rudess) {
+            second_phase += second_step;
+            if (second_phase >= 2 * M_PI) {
+                second_phase -= 2 * M_PI;
+            }
         }
 
-        d->fft_in[i] = accumulator;
+        d->fft_in[i] = accumulator / d->draws;
     }
+
+    /* Pad out the sample buffer. */
+    for (i; i < d->spec.samples; i++) {
+        d->fft_in[i] = 0;
+    }
+
+    fftw_execute(d->fft_plan);
+
+    for (i = 0; i < d->spec.samples / 2 + 1; i++) {
+        d->fft_out[i] *= d->lpf_fft[i];
+    }
+
+    fftw_execute(d->ifft_plan);
 
     for (i = 0; i < len; i++) {
         accumulator = d->fft_in[i];
 
-        accumulator *= d->volume * -32767 / d->draws;
+        accumulator *= d->volume * -32767 / len;
 
         if (accumulator > 32767) {
             accumulator = 32767;
