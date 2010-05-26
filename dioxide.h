@@ -49,6 +49,8 @@ struct dioxide {
     double *fft_in;
     fftw_complex *fft_out, *lpf_fft;
     fftw_plan fft_plan, ifft_plan;
+
+    double lpf_cutoff;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);

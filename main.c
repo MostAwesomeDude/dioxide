@@ -20,11 +20,12 @@ void handle_sigint(int s) {
 }
 
 void write_sound(void *private, Uint8 *stream, int len);
+void update_lpf(struct dioxide *d);
 
 void setup_sound(struct dioxide *d) {
     struct SDL_AudioSpec actual, *wanted = &d->spec;
     double temp;
-    unsigned i;
+    unsigned i, fft_len;
 
     wanted->freq = 48000;
     wanted->format = AUDIO_S16;
@@ -44,6 +45,8 @@ void setup_sound(struct dioxide *d) {
     wanted->freq = actual.freq;
     wanted->format = actual.format;
     wanted->samples = actual.samples;
+
+    fft_len = actual.samples / 2 + 1;
 
     d->volume = 0.7;
 
@@ -66,34 +69,54 @@ void setup_sound(struct dioxide *d) {
     printf("Precalculating FFTs, please hold...\n");
 
     d->fft_in = fftw_malloc(actual.samples * sizeof(double));
-    d->fft_out = fftw_malloc((actual.samples / 2 + 1) * sizeof(fftw_complex));
+    d->fft_out = fftw_malloc(fft_len * sizeof(fftw_complex));
     d->fft_plan = fftw_plan_dft_r2c_1d(actual.samples,
         d->fft_in, d->fft_out, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
     d->ifft_plan = fftw_plan_dft_c2r_1d(actual.samples,
         d->fft_out, d->fft_in, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
 
-    d->lpf_fft = malloc((actual.samples / 2 + 1) * sizeof(fftw_complex));
+    d->lpf_fft = malloc(fft_len * sizeof(fftw_complex));
 
-/*
-    for (i = 0; i < actual.samples; i++) {
-        temp = (double)i / actual.samples;
-        d->fft_in[i] = sin(temp) / temp;
-    }
+    d->lpf_cutoff = 0.5;
+    update_lpf(d);
 
-    fftw_execute(d->fft_plan);
-
-    memcpy(d->lpf_fft, d->fft_out,
-        (actual.samples / 2 + 1) * sizeof(fftw_complex));
-*/
-
+#if 0
     /* Remove the discontinuity at x = 0. */
     d->lpf_fft[0] = 1;
-    for (i = 1; i < actual.samples / 2 + 1; i++) {
+    for (i = 1; i < fft_len; i++) {
         temp = i * M_PI / (actual.samples / 2 + 1);
         d->lpf_fft[i] = sin(temp) / temp;
     }
-
+#endif
     printf("Calculated FFTs\n");
+}
+
+void update_lpf(struct dioxide *d) {
+    unsigned i, fft_len = d->spec.samples / 2 + 1;
+    double temp;
+
+    /* Chebyshev filter.
+     * 1/sqrt(1 + e**2 * Tn(w/w0) ** 2)
+     *
+     * e is the ripple factor. e == 1 for 3dB ripple.
+     * w is the input, w0 is the cutoff.
+     * Tn is the nth order Chebyshev polynomial. n is the number of poles.
+     *
+     * T2(x) = 2x**2 - 1
+     * T3(x) = 4x**3 - 2x - x
+     *
+     * Tn(x) = cos(n arccos(x)) = cosh(n arccosh(x))
+     */
+    for (i = 0; i < fft_len; i++) {
+        /* w / w0 */
+        temp = (double)i / fft_len / d->lpf_cutoff;
+        if (temp >= 1) {
+            temp = 1 / sqrt(1 + pow(cosh(3 * acosh(temp)), 2));
+        } else {
+            temp = 1 / sqrt(1 + pow(cos(3 * acos(temp)), 2));
+        }
+        d->lpf_fft[i] = temp;
+    }
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -110,13 +133,15 @@ void write_sound(void *private, Uint8 *stream, int len) {
     /* Treat len and buf as counting shorts, not bytes.
      * Avoids cognitive dissonance in later code. */
     len /= 2;
-
+#if 0
     accumulator = step_lfo(d, &d->vibrato, len);
 
     if (accumulator == 0.0) {
         accumulator = 1;
     }
-
+#else
+    accumulator = 1;
+#endif
     phase = d->phase;
     step = M_PI * (d->pitch * accumulator) / d->spec.freq;
 
@@ -305,7 +330,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C10 */
         case 75:
-            d->volume = scale_pot_double(control.value, 0.0, 1.0);
+            d->volume = scale_pot_double(control.value, 0.0, 2.0);
             printf("Volume %f\n", d->volume);
             break;
         /* C11 */
@@ -313,7 +338,8 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            d->vibrato.rate = scale_pot_double(control.value, 0.01, 5);
+            //d->vibrato.rate = scale_pot_double(control.value, 0.01, 5);
+            d->lpf_cutoff = scale_pot_double(control.value, 0.001, 0.5);
             break;
         default:
             printf("Controller %d\n", control.param);
