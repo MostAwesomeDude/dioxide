@@ -14,6 +14,7 @@ void handle_sigint(int s) {
     printf("Caught SIGINT, quitting.\n");
 }
 
+void update_pitch(struct dioxide *d);
 void write_sound(void *private, Uint8 *stream, int len);
 
 void setup_sound(struct dioxide *d) {
@@ -74,6 +75,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
     /* Treat len and buf as counting shorts, not bytes.
      * Avoids cognitive dissonance in later code. */
     len /= 2;
+
+    /* Update pitch only once per buffer. */
+    update_pitch(d);
 
     samples = malloc(len * sizeof(float));
     backburner = malloc(len * sizeof(float));
@@ -157,9 +161,12 @@ void setup_sequencer(struct dioxide *d) {
         SND_SEQ_PORT_TYPE_MIDI_GENERIC);
 }
 
+static double step_up = 1.0594630943592953;
+static double step_down = 0.94387431268169353;
+static double inv_log_2 = 1.4426950408889634;
+
 void update_pitch(struct dioxide *d) {
-    double note;
-    double bend;
+    double note, bend, target_pitch, ratio;
 
     if (!d->note_count) {
         return;
@@ -175,7 +182,16 @@ void update_pitch(struct dioxide *d) {
     note = d->notes[d->note_count - 1];
     note += bend;
 
-    d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
+    target_pitch = 440 * pow(2, (note - 69.0) / 12.0);
+
+    ratio = target_pitch / d->pitch;
+
+    if ((d->pitch < 20) ||
+        (step_up > ratio > step_down)) {
+        d->pitch = target_pitch;
+    } else {
+        d->pitch *= pow(2, (log(ratio) / inv_log_2) * 0.5);
+    }
 }
 
 void update_draws(struct dioxide *d) {
