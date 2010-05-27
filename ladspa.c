@@ -46,7 +46,7 @@ void open_plugin(struct dioxide *d, const char *name) {
     plugin->dl_handle = handle;
 }
 
-void select_plugin(struct dioxide *d, unsigned id) {
+struct ladspa_plugin* select_plugin(struct dioxide *d, unsigned id) {
     struct ladspa_plugin *plugin, *iter;
 
     iter = d->available_plugins;
@@ -85,6 +85,8 @@ void select_plugin(struct dioxide *d, unsigned id) {
         }
         iter->next = plugin;
     }
+
+    return plugin;
 }
 
 void setup_plugins(struct dioxide *d) {
@@ -95,13 +97,11 @@ void setup_plugins(struct dioxide *d) {
     open_plugin(d, "lp4pole_1671.so");
 
     /* Sawtooth generator */
-    select_plugin(d, 1642);
-    plugin = find_plugin_by_id(d->plugin_chain, 1642);
+    plugin = select_plugin(d, 1642);
     plugin->output = 1;
 
     /* LPF */
-    select_plugin(d, 1672);
-    plugin = find_plugin_by_id(d->plugin_chain, 1672);
+    plugin = select_plugin(d, 1672);
     plugin->input = 2;
     plugin->output = 3;
 
