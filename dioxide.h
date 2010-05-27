@@ -34,6 +34,13 @@ struct ladspa_plugin {
     struct ladspa_plugin *next;
 };
 
+enum adsr {
+    ADSR_ATTACK,
+    ADSR_DECAY,
+    ADSR_SUSTAIN,
+    ADSR_RELEASE,
+};
+
 struct dioxide {
     snd_seq_t *seq;
 
@@ -66,6 +73,9 @@ struct dioxide {
 
     float lpf_cutoff;
     float lpf_resonance;
+
+    enum adsr adsr_phase;
+    float adsr_volume;
 
     struct ladspa_plugin *available_plugins;
     struct ladspa_plugin *plugin_chain;

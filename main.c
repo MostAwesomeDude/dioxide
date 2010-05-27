@@ -14,6 +14,7 @@ void handle_sigint(int s) {
     printf("Caught SIGINT, quitting.\n");
 }
 
+void update_adsr(struct dioxide *d);
 void update_pitch(struct dioxide *d);
 void write_sound(void *private, Uint8 *stream, int len);
 
@@ -123,7 +124,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
-        accumulator *= d->volume * -32767;
+        update_adsr(d);
+
+        accumulator *= d->adsr_volume * d->volume * -32767;
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -166,6 +169,38 @@ void setup_sequencer(struct dioxide *d) {
     snd_seq_create_simple_port(d->seq, "Dioxide",
         SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
         SND_SEQ_PORT_TYPE_MIDI_GENERIC);
+}
+
+void update_adsr(struct dioxide *d) {
+    switch (d->adsr_phase) {
+        case ADSR_ATTACK:
+            if (d->adsr_volume < 1.0) {
+                d->adsr_volume += 0.005;
+            } else {
+                d->adsr_volume = 1.0;
+                d->adsr_phase = ADSR_DECAY;
+            }
+            break;
+        case ADSR_DECAY:
+            if (d->adsr_volume > 0.73) {
+                d->adsr_volume -= 0.001;
+            } else {
+                d->adsr_volume = 0.73;
+                d->adsr_phase = ADSR_SUSTAIN;
+            }
+            break;
+        case ADSR_SUSTAIN:
+            break;
+        case ADSR_RELEASE:
+            if (d->adsr_volume > 0.0) {
+                d->adsr_volume -= 0.001;
+            } else {
+                d->adsr_volume = 0.0;
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 static double step_up = 1.0594630943592953;
@@ -327,9 +362,9 @@ void poll_sequencer(struct dioxide *d) {
 
                 d->notes[d->note_count] = event->data.note.note;
                 d->note_count++;
-            }
 
-            update_pitch(d);
+                d->adsr_phase = ADSR_ATTACK;
+            }
 
             break;
         case SND_SEQ_EVENT_NOTEOFF:
@@ -347,7 +382,9 @@ void poll_sequencer(struct dioxide *d) {
                 d->notes[i] = d->notes[i + 1];
             }
 
-            update_pitch(d);
+            if (!d->note_count) {
+                d->adsr_phase = ADSR_RELEASE;
+            }
 
             break;
         case SND_SEQ_EVENT_CONTROLLER:
@@ -366,7 +403,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
     }
 
-    if (d->note_count) {
+    if (d->note_count || d->adsr_volume) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);
