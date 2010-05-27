@@ -128,7 +128,7 @@ struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
     return NULL;
 }
 
-void update_plugins(struct dioxide *d) {
+void hook_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
 
     /* Sawtooth generator */

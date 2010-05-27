@@ -78,8 +78,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
     samples = malloc(len * sizeof(float));
     backburner = malloc(len * sizeof(float));
 
-    update_plugins(d);
-
     plugin = d->plugin_chain;
 
     plugin->desc->connect_port(plugin->handle, plugin->output, samples);
@@ -366,6 +364,7 @@ int main() {
     setup_sound(d);
     setup_plugins(d);
     setup_sequencer(d);
+    hook_plugins(d);
 
     while (!time_to_quit) {
         poll_sequencer(d);

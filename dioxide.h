@@ -72,7 +72,7 @@ struct dioxide {
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
 
 void setup_plugins(struct dioxide *d);
-void update_plugins(struct dioxide *d);
+void hook_plugins(struct dioxide *d);
 void cleanup_plugins(struct dioxide *d);
 
 struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
