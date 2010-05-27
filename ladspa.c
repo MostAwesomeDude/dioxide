@@ -160,6 +160,7 @@ void cleanup_plugins(struct dioxide *d) {
         if (plugin->desc->deactivate != NULL) {
             plugin->desc->deactivate(plugin->handle);
         }
+
         plugin = plugin->next;
         free(doomed);
     }
@@ -167,6 +168,10 @@ void cleanup_plugins(struct dioxide *d) {
     plugin = d->available_plugins;
     while (plugin) {
         doomed = plugin;
+        if (plugin->dl_handle) {
+            dlclose(plugin->dl_handle);
+        }
+
         plugin = plugin->next;
         free(doomed);
     }
