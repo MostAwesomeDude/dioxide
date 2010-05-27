@@ -27,6 +27,8 @@ struct lpf {
 struct ladspa_plugin {
     void *dl_handle;
 
+    unsigned input, output;
+
     LADSPA_Descriptor *desc;
     LADSPA_Handle handle;
     struct ladspa_plugin *next;
@@ -60,7 +62,8 @@ struct dioxide {
     fftw_complex *fft_out, *lpf_fft;
     fftw_plan fft_plan, ifft_plan;
 
-    double lpf_cutoff;
+    float lpf_cutoff;
+    float lpf_resonance;
 
     struct ladspa_plugin *available_plugins;
     struct ladspa_plugin *plugin_chain;

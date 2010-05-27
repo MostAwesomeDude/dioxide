@@ -54,6 +54,8 @@ void setup_sound(struct dioxide *d) {
     d->drawbars[7].harmonic = 12;
     d->drawbars[8].harmonic = 16;
 
+    d->lpf_resonance = 2.0;
+
     printf("Initialized basic synth parameters, frame length is %d usec\n",
         (1000 * 1000 * actual.samples / actual.freq));
 }
@@ -63,10 +65,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
     double accumulator;
     unsigned i;
     int retval;
-    float samples[512];
+    float *samples, *backburner, *ftemp;
     signed short *buf = (signed short*)stream;
     struct timeval then, now;
-    struct ladspa_plugin *sawtooth;
+    struct ladspa_plugin *plugin;
 
     gettimeofday(&then, NULL);
 
@@ -74,12 +76,42 @@ void write_sound(void *private, Uint8 *stream, int len) {
      * Avoids cognitive dissonance in later code. */
     len /= 2;
 
+    samples = malloc(len * sizeof(float));
+    backburner = malloc(len * sizeof(float));
+
     update_plugins(d);
 
-    sawtooth = find_plugin_by_id(d->plugin_chain, 1642);
-    sawtooth->desc->connect_port(sawtooth->handle, 1, samples);
-    sawtooth->desc->run(sawtooth->handle, len);
+    plugin = d->plugin_chain;
 
+    plugin->desc->connect_port(plugin->handle, plugin->output, samples);
+    plugin->desc->run(plugin->handle, len);
+
+    while (plugin->next != NULL) {
+        plugin = plugin->next;
+
+        /* Switch the names of the buffers, so that "samples" is always the
+         * buffer being rendered to. */
+        if (LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties)) {
+            ftemp = backburner;
+            backburner = samples;
+            samples = ftemp;
+
+            plugin->desc->connect_port(plugin->handle,
+                plugin->input, backburner);
+        } else {
+            plugin->desc->connect_port(plugin->handle, plugin->input, samples);
+        }
+
+        plugin->desc->connect_port(plugin->handle, plugin->output, samples);
+        plugin->desc->run(plugin->handle, len);
+    }
+#if 0
+    printf("samples = [\n");
+    for (i = 0; i < len; i++) {
+        printf("%f,\n", samples[i]);
+    }
+    printf("]\n");
+#endif
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
@@ -94,6 +126,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
         *buf = (signed short)accumulator;
         buf++;
     }
+
+    free(samples);
+    free(backburner);
 
     gettimeofday(&now, NULL);
 
@@ -162,6 +197,12 @@ long scale_pot_long(unsigned pot, long low, long high) {
     return l / 127 + low;
 }
 
+float scale_pot_float(unsigned pot, float low, float high) {
+    float f = pot / 127.0;
+
+    return f * (high - low) + low;
+}
+
 double scale_pot_double(unsigned pot, double low, double high) {
     float f = pot / 127.0;
 
@@ -217,8 +258,9 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            //d->vibrato.rate = scale_pot_double(control.value, 0.01, 5);
-            d->lpf_cutoff = scale_pot_double(control.value, 0.001, 0.5);
+            d->lpf_cutoff =
+                scale_pot_float(control.value, 0.001, d->spec.freq);
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         default:
             printf("Controller %d\n", control.param);
@@ -305,7 +347,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
     }
 
-    if (d->note_count && d->draws) {
+    if (d->note_count) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);

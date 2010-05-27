@@ -50,16 +50,19 @@ void select_plugin(struct dioxide *d, unsigned id) {
     struct ladspa_plugin *plugin, *iter;
 
     iter = d->available_plugins;
-    while (iter->desc->UniqueID != id) {
-        iter = iter->next;
-        if (iter == d->available_plugins) {
-            printf("Couldn't select plugin %d\n", id);
-            return;
+    while (iter) {
+        if (iter->desc->UniqueID == id) {
+            break;
         }
+        iter = iter->next;
+    }
+    if (iter == NULL) {
+        printf("Couldn't select plugin %d\n", id);
+        return;
     }
 
-    plugin = malloc(sizeof(struct ladspa_plugin));
-    *plugin = *iter;
+    plugin = calloc(1, sizeof(struct ladspa_plugin));
+    plugin->desc = iter->desc;
 
     plugin->handle = plugin->desc->instantiate(plugin->desc, d->spec.freq);
     if (plugin->handle == NULL) {
@@ -76,8 +79,8 @@ void select_plugin(struct dioxide *d, unsigned id) {
     if (d->plugin_chain == NULL) {
         d->plugin_chain = plugin;
     } else {
-        iter = d->plugin_chain->next;
-        while (iter->next) {
+        iter = d->plugin_chain;
+        while (iter && iter->next) {
             iter = iter->next;
         }
         iter->next = plugin;
@@ -86,11 +89,29 @@ void select_plugin(struct dioxide *d, unsigned id) {
 
 void setup_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
+    unsigned i = 1;
 
     open_plugin(d, "sawtooth_1641.so");
+    open_plugin(d, "lp4pole_1671.so");
 
     /* Sawtooth generator */
     select_plugin(d, 1642);
+    plugin = find_plugin_by_id(d->plugin_chain, 1642);
+    plugin->output = 1;
+
+    /* LPF */
+    select_plugin(d, 1672);
+    plugin = find_plugin_by_id(d->plugin_chain, 1672);
+    plugin->input = 2;
+    plugin->output = 3;
+
+    printf("Prepared plugin chain\n");
+    plugin = d->plugin_chain;
+    while (plugin) {
+        printf("%d: %s (%p)\n", i, plugin->desc->Name, plugin->handle);
+        plugin = plugin->next;
+        i++;
+    }
 }
 
 struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
@@ -117,6 +138,16 @@ void update_plugins(struct dioxide *d) {
         printf("Couldn't set up sawtooth!\n");
     } else {
         plugin->desc->connect_port(plugin->handle, 0, &d->pitch);
+    }
+
+    /* LPF */
+    plugin = find_plugin_by_id(d->plugin_chain, 1672);
+
+    if (plugin == NULL) {
+        printf("Couldn't set up low-pass filter!\n");
+    } else {
+        plugin->desc->connect_port(plugin->handle, 0, &d->lpf_cutoff);
+        plugin->desc->connect_port(plugin->handle, 1, &d->lpf_resonance);
     }
 }
 
