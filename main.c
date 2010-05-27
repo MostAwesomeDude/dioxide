@@ -234,11 +234,11 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
-            d->drawbars[0].stop = scale_pot_long(control.value, 0, 8);
+            d->chorus_width = scale_pot_float(control.value, 0.5, 10.0);
             break;
         /* C2 */
         case 71:
-            d->drawbars[1].stop = scale_pot_long(control.value, 0, 8);
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 1.0);
             break;
         /* C3 */
         case 91:
@@ -271,7 +271,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         /* C10 */
         case 75:
             d->volume = scale_pot_double(control.value, 0.0, 2.0);
-            printf("Volume %f\n", d->volume);
             break;
         /* C11 */
         case 76:
@@ -279,8 +278,8 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         /* C34 */
         case 1:
             d->lpf_cutoff =
-                scale_pot_float(control.value, 100, d->spec.freq / 2);
-            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
+                scale_pot_float(control.value, 100, d->spec.freq / 3);
+            //d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         default:
             printf("Controller %d\n", control.param);

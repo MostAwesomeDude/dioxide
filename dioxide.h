@@ -62,6 +62,8 @@ struct dioxide {
     fftw_complex *fft_out, *lpf_fft;
     fftw_plan fft_plan, ifft_plan;
 
+    float chorus_width;
+
     float lpf_cutoff;
     float lpf_resonance;
 

@@ -150,11 +150,13 @@ void hook_plugins(struct dioxide *d) {
     plugin = find_plugin_by_id(d->plugin_chain, 2583);
 
     if (!plugin) {
-        printf("Couldn't set up sawtooth!\n");
+        printf("couldn't set up chorus!\n");
     } else {
+        plugin->desc->connect_port(plugin->handle, 2, &d->chorus_width);
+
         static float chorus_feedforward = 0.5;
-        plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
         static float chorus_feedback = 0.4;
+        plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
         plugin->desc->connect_port(plugin->handle, 6, &chorus_feedback);
     }
 
