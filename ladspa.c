@@ -93,12 +93,18 @@ void setup_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
     unsigned i = 1;
 
+    open_plugin(d, "caps.so");
     open_plugin(d, "sawtooth_1641.so");
     open_plugin(d, "lp4pole_1671.so");
 
     /* Sawtooth generator */
     plugin = select_plugin(d, 1642);
     plugin->output = 1;
+
+    /* Chorus */
+    plugin = select_plugin(d, 2583);
+    plugin->input = 0;
+    plugin->output = 7;
 
     /* LPF */
     plugin = select_plugin(d, 1672);
@@ -138,6 +144,18 @@ void hook_plugins(struct dioxide *d) {
         printf("Couldn't set up sawtooth!\n");
     } else {
         plugin->desc->connect_port(plugin->handle, 0, &d->pitch);
+    }
+
+    /* Chorus */
+    plugin = find_plugin_by_id(d->plugin_chain, 2583);
+
+    if (!plugin) {
+        printf("Couldn't set up sawtooth!\n");
+    } else {
+        static float chorus_feedforward = 0.5;
+        plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
+        static float chorus_feedback = 0.4;
+        plugin->desc->connect_port(plugin->handle, 6, &chorus_feedback);
     }
 
     /* LPF */

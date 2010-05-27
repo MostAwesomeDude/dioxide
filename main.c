@@ -86,7 +86,13 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     plugin->desc->connect_port(plugin->handle, plugin->output, samples);
     plugin->desc->run(plugin->handle, len);
-
+#if 0
+    printf("initialsamples = [\n");
+    for (i = 0; i < len; i++) {
+        printf("%f,\n", samples[i]);
+    }
+    printf("]\n");
+#endif
     while (plugin->next) {
         plugin = plugin->next;
 
@@ -105,14 +111,15 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         plugin->desc->connect_port(plugin->handle, plugin->output, samples);
         plugin->desc->run(plugin->handle, len);
-    }
 #if 0
-    printf("samples = [\n");
-    for (i = 0; i < len; i++) {
-        printf("%f,\n", samples[i]);
-    }
-    printf("]\n");
+        printf("samples = [\n");
+        for (i = 0; i < len; i++) {
+            printf("%f,\n", samples[i]);
+        }
+        printf("]\n");
 #endif
+    }
+
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
