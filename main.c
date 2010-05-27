@@ -19,7 +19,7 @@ void write_sound(void *private, Uint8 *stream, int len);
 void setup_sound(struct dioxide *d) {
     struct SDL_AudioSpec actual, *wanted = &d->spec;
     double temp;
-    unsigned i, fft_len;
+    unsigned i;
 
     wanted->freq = 48000;
     wanted->format = AUDIO_S16;
@@ -40,8 +40,6 @@ void setup_sound(struct dioxide *d) {
     wanted->format = actual.format;
     wanted->samples = actual.samples;
 
-    fft_len = actual.samples / 2 + 1;
-
     d->volume = 0.7;
 
     d->drawbars[0].harmonic = 1;
@@ -54,6 +52,7 @@ void setup_sound(struct dioxide *d) {
     d->drawbars[7].harmonic = 12;
     d->drawbars[8].harmonic = 16;
 
+    d->lpf_cutoff = d->spec.freq / 2;
     d->lpf_resonance = 2.0;
 
     printf("Initialized basic synth parameters, frame length is %d usec\n",
@@ -259,7 +258,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         /* C34 */
         case 1:
             d->lpf_cutoff =
-                scale_pot_float(control.value, 0.001, d->spec.freq);
+                scale_pot_float(control.value, 100, d->spec.freq / 2);
             d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         default:
