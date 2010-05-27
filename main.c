@@ -85,7 +85,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     plugin->desc->connect_port(plugin->handle, plugin->output, samples);
     plugin->desc->run(plugin->handle, len);
 
-    while (plugin->next != NULL) {
+    while (plugin->next) {
         plugin = plugin->next;
 
         /* Switch the names of the buffers, so that "samples" is always the
@@ -359,7 +359,7 @@ int main() {
 
     signal(SIGINT, handle_sigint);
 
-    if (d == NULL) {
+    if (!d) {
         exit(EXIT_FAILURE);
     }
 

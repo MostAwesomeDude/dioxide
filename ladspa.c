@@ -12,14 +12,14 @@ void open_plugin(struct dioxide *d, const char *name) {
 
     handle = dlopen(name, RTLD_NOW | RTLD_LOCAL);
 
-    if (handle == NULL) {
+    if (!handle) {
         printf("Couldn't load plugin %s: %s\n", name, dlerror());
         return;
     }
 
     ladspa_descriptor = dlsym(handle, "ladspa_descriptor");
 
-    if (ladspa_descriptor == NULL) {
+    if (!ladspa_descriptor) {
         printf("Couldn't describe plugin %s: %s\n", name, dlerror());
         return;
     }
@@ -29,7 +29,7 @@ void open_plugin(struct dioxide *d, const char *name) {
         plugin->desc = desc;
 
         /* Stash the plugin. */
-        if (d->available_plugins == NULL) {
+        if (!d->available_plugins) {
             d->available_plugins = plugin;
         } else {
             iter = d->available_plugins;
@@ -56,7 +56,7 @@ void select_plugin(struct dioxide *d, unsigned id) {
         }
         iter = iter->next;
     }
-    if (iter == NULL) {
+    if (!iter) {
         printf("Couldn't select plugin %d\n", id);
         return;
     }
@@ -65,18 +65,18 @@ void select_plugin(struct dioxide *d, unsigned id) {
     plugin->desc = iter->desc;
 
     plugin->handle = plugin->desc->instantiate(plugin->desc, d->spec.freq);
-    if (plugin->handle == NULL) {
+    if (!plugin->handle) {
         printf("Failed to instantiate plugin %d\n", id);
         free(plugin);
         return;
     }
 
-    if (plugin->desc->activate != NULL) {
+    if (plugin->desc->activate) {
         plugin->desc->activate(plugin->handle);
     }
 
     /* Stash the plugin. */
-    if (d->plugin_chain == NULL) {
+    if (!d->plugin_chain) {
         d->plugin_chain = plugin;
     } else {
         iter = d->plugin_chain;
@@ -134,7 +134,7 @@ void update_plugins(struct dioxide *d) {
     /* Sawtooth generator */
     plugin = find_plugin_by_id(d->plugin_chain, 1642);
 
-    if (plugin == NULL) {
+    if (!plugin) {
         printf("Couldn't set up sawtooth!\n");
     } else {
         plugin->desc->connect_port(plugin->handle, 0, &d->pitch);
@@ -143,7 +143,7 @@ void update_plugins(struct dioxide *d) {
     /* LPF */
     plugin = find_plugin_by_id(d->plugin_chain, 1672);
 
-    if (plugin == NULL) {
+    if (!plugin) {
         printf("Couldn't set up low-pass filter!\n");
     } else {
         plugin->desc->connect_port(plugin->handle, 0, &d->lpf_cutoff);
@@ -157,7 +157,7 @@ void cleanup_plugins(struct dioxide *d) {
     plugin = d->plugin_chain;
     while (plugin) {
         doomed = plugin;
-        if (plugin->desc->deactivate != NULL) {
+        if (plugin->desc->deactivate) {
             plugin->desc->deactivate(plugin->handle);
         }
 
