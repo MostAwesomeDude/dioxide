@@ -9,18 +9,12 @@
 
 static int time_to_quit = 0;
 
-/* 2 ** (cents/1200) */
-static double twelve_cents = 1.0069555500567189;
-static double six_cents_up = 1.0034717485095028;
-static double six_cents_down = 0.99654026282786778;
-
 void handle_sigint(int s) {
     time_to_quit = 1;
     printf("Caught SIGINT, quitting.\n");
 }
 
 void write_sound(void *private, Uint8 *stream, int len);
-void update_lpf(struct dioxide *d);
 
 void setup_sound(struct dioxide *d) {
     struct SDL_AudioSpec actual, *wanted = &d->spec;
@@ -60,146 +54,36 @@ void setup_sound(struct dioxide *d) {
     d->drawbars[7].harmonic = 12;
     d->drawbars[8].harmonic = 16;
 
-    d->vibrato.center = 1;
-    d->vibrato.amplitude = twelve_cents - 1;
-
     printf("Initialized basic synth parameters, frame length is %d usec\n",
         (1000 * 1000 * actual.samples / actual.freq));
-
-    printf("Precalculating FFTs, please hold...\n");
-
-    d->fft_in = fftw_malloc(actual.samples * sizeof(double));
-    d->fft_out = fftw_malloc(fft_len * sizeof(fftw_complex));
-    d->fft_plan = fftw_plan_dft_r2c_1d(actual.samples,
-        d->fft_in, d->fft_out, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
-    d->ifft_plan = fftw_plan_dft_c2r_1d(actual.samples,
-        d->fft_out, d->fft_in, FFTW_PATIENT | FFTW_PRESERVE_INPUT);
-
-    d->lpf_fft = malloc(fft_len * sizeof(fftw_complex));
-
-    d->lpf_cutoff = 0.5;
-    update_lpf(d);
-
-#if 0
-    /* Remove the discontinuity at x = 0. */
-    d->lpf_fft[0] = 1;
-    for (i = 1; i < fft_len; i++) {
-        temp = i * M_PI / (actual.samples / 2 + 1);
-        d->lpf_fft[i] = sin(temp) / temp;
-    }
-#endif
-    printf("Calculated FFTs\n");
-}
-
-void update_lpf(struct dioxide *d) {
-    unsigned i, fft_len = d->spec.samples / 2 + 1;
-    double temp;
-
-    /* Chebyshev filter.
-     * 1/sqrt(1 + e**2 * Tn(w/w0) ** 2)
-     *
-     * e is the ripple factor. e == 1 for 3dB ripple.
-     * w is the input, w0 is the cutoff.
-     * Tn is the nth order Chebyshev polynomial. n is the number of poles.
-     *
-     * T2(x) = 2x**2 - 1
-     * T3(x) = 4x**3 - 2x - x
-     *
-     * Tn(x) = cos(n arccos(x)) = cosh(n arccosh(x))
-     */
-    for (i = 0; i < fft_len; i++) {
-        /* w / w0 */
-        temp = (double)i / fft_len / d->lpf_cutoff;
-        if (temp >= 1) {
-            temp = 1 / sqrt(1 + pow(cosh(3 * acosh(temp)), 2));
-        } else {
-            temp = 1 / sqrt(1 + pow(cos(3 * acos(temp)), 2));
-        }
-        d->lpf_fft[i] = temp;
-    }
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
-    double phase, step, accumulator;
-    double second_phase, second_step;
-    unsigned i, j, draws = 0;
+    double accumulator;
+    unsigned i;
     int retval;
+    float samples[512];
     signed short *buf = (signed short*)stream;
     struct timeval then, now;
+    struct ladspa_plugin *sawtooth;
 
     gettimeofday(&then, NULL);
 
     /* Treat len and buf as counting shorts, not bytes.
      * Avoids cognitive dissonance in later code. */
     len /= 2;
-#if 0
-    accumulator = step_lfo(d, &d->vibrato, len);
 
-    if (accumulator == 0.0) {
-        accumulator = 1;
-    }
-#else
-    accumulator = 1;
-#endif
-    phase = d->phase;
-    step = M_PI * (d->pitch * accumulator) / d->spec.freq;
+    update_plugins(d);
 
-    if (d->rudess) {
-        second_phase = d->second_phase;
-        second_step = step * six_cents_up;
-        step *= six_cents_down;
-    }
+    sawtooth = find_plugin_by_id(d->plugin_chain, 1642);
+    sawtooth->desc->connect_port(sawtooth->handle, 1, samples);
+    sawtooth->desc->run(sawtooth->handle, len);
 
     for (i = 0; i < len; i++) {
-        accumulator = 0;
+        accumulator = samples[i];
 
-        for (j = 0; j < 9; j++) {
-            if (d->drawbars[j].stop) {
-                accumulator += d->drawbars[j].stop *
-                    sin(phase * d->drawbars[j].harmonic);
-                if (d->rudess) {
-                    accumulator += d->drawbars[j].stop *
-                        sin(second_phase * d->drawbars[j].harmonic);
-                }
-            }
-        }
-
-        if (d->rudess) {
-            accumulator *= 0.5;
-        }
-
-        phase += step;
-        if (phase >= 2 * M_PI) {
-            phase -= 2 * M_PI;
-        }
-        if (d->rudess) {
-            second_phase += second_step;
-            if (second_phase >= 2 * M_PI) {
-                second_phase -= 2 * M_PI;
-            }
-        }
-
-        d->fft_in[i] = accumulator / d->draws;
-    }
-
-    /* Pad out the sample buffer. */
-    for (i; i < d->spec.samples; i++) {
-        d->fft_in[i] = 0;
-    }
-
-    fftw_execute(d->fft_plan);
-
-    for (i = 0; i < d->spec.samples / 2 + 1; i++) {
-        d->fft_out[i] *= d->lpf_fft[i];
-    }
-
-    fftw_execute(d->ifft_plan);
-
-    for (i = 0; i < len; i++) {
-        accumulator = d->fft_in[i];
-
-        accumulator *= d->volume * -32767 / len;
+        accumulator *= d->volume * -32767;
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -209,11 +93,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         *buf = (signed short)accumulator;
         buf++;
-    }
-
-    d->phase = phase;
-    if (d->rudess) {
-        d->second_phase = second_phase;
     }
 
     gettimeofday(&now, NULL);
@@ -443,19 +322,19 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    setup_plugins(d);
     setup_sound(d);
+    setup_plugins(d);
     setup_sequencer(d);
 
     while (!time_to_quit) {
         poll_sequencer(d);
     }
 
-    SDL_CloseAudio();
+    cleanup_plugins(d);
 
     retval = snd_seq_close(d->seq);
+    SDL_CloseAudio();
 
     free(d);
-
     exit(retval);
 }
