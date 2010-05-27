@@ -30,7 +30,7 @@ void setup_sound(struct dioxide *d) {
 
     if (SDL_OpenAudio(wanted, &actual)) {
         printf("Couldn't setup sound: %s\n", SDL_GetError());
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     printf("Opened sound for playback: Rate %d, format %d, samples %d\n",
