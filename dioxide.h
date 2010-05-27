@@ -26,6 +26,7 @@ struct lpf {
 
 struct ladspa_plugin {
     LADSPA_Descriptor *desc;
+    LADSPA_Handle handle;
     struct ladspa_plugin *prev, *next;
 };
 

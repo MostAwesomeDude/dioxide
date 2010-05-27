@@ -39,8 +39,23 @@ void open_plugin(struct dioxide *d, const char *name) {
             plugin->next = d->available_plugins;
         }
 
+        plugin->handle = desc->instantiate(desc, d->spec.samples);
+
         printf("Loaded plugin %s\n", desc->Name);
         i++;
+    }
+}
+
+void select_plugin(struct dioxide *d, unsigned id) {
+    struct ladspa_plugin *plugin, *iter;
+
+    iter = d->available_plugins;
+    while (iter->desc->UniqueID != id) {
+       iter = iter->next;
+        if (iter == d->available_plugins) {
+            printf("Couldn't select plugin %d\n");
+            return;
+        }
     }
 }
 
