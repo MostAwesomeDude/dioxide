@@ -248,10 +248,15 @@ float scale_pot_float(unsigned pot, float low, float high) {
     return f * (high - low) + low;
 }
 
-double scale_pot_double(unsigned pot, double low, double high) {
+float scale_pot_log_float(unsigned pot, float low, float high) {
     float f = pot / 127.0;
 
-    return f * (high - low) + low;
+    low = log(low);
+    high = log(high);
+
+    f = f * (high - low) + low;
+
+    return pow(M_E, f);
 }
 
 void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
@@ -295,7 +300,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         /* C34 */
         case 1:
             d->lpf_cutoff =
-                scale_pot_float(control.value, 100, d->spec.freq / 3);
+                scale_pot_float(control.value, 880, d->spec.freq / 4);
             break;
         default:
             printf("Controller %d\n", control.param);
