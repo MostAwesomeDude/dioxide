@@ -15,15 +15,6 @@ struct lfo {
     double amplitude;
 };
 
-struct lpf {
-    double a, b, c, d;
-    double sample_prev, sample_ancient;
-    double retval_prev, retval_ancient;
-
-    double resonance;
-    double cutoff;
-};
-
 struct ladspa_plugin {
     void *dl_handle;
 
@@ -54,20 +45,9 @@ struct dioxide {
     unsigned note_count;
 
     struct lfo vibrato;
-    struct lpf lpf;
-
-    struct {
-        unsigned harmonic;
-        unsigned stop;
-    } drawbars[8];
-    unsigned draws;
 
     int rudess;
     double second_phase;
-
-    double *fft_in;
-    fftw_complex *fft_out, *lpf_fft;
-    fftw_plan fft_plan, ifft_plan;
 
     float chorus_width;
 

@@ -44,16 +44,6 @@ void setup_sound(struct dioxide *d) {
 
     d->volume = 0.7;
 
-    d->drawbars[0].harmonic = 1;
-    d->drawbars[1].harmonic = 3;
-    d->drawbars[2].harmonic = 2;
-    d->drawbars[3].harmonic = 4;
-    d->drawbars[4].harmonic = 6;
-    d->drawbars[5].harmonic = 8;
-    d->drawbars[6].harmonic = 10;
-    d->drawbars[7].harmonic = 12;
-    d->drawbars[8].harmonic = 16;
-
     d->lpf_cutoff = d->spec.freq / 2;
     d->lpf_resonance = 2.0;
 
@@ -236,16 +226,6 @@ void update_pitch(struct dioxide *d) {
     }
 }
 
-void update_draws(struct dioxide *d) {
-    unsigned i;
-
-    d->draws = 0;
-
-    for (i = 0; i < 9; i++) {
-        d->draws += d->drawbars[i].stop;
-    }
-}
-
 long scale_pot_long(unsigned pot, long low, long high) {
     long l = pot * (high - low);
 
@@ -277,35 +257,27 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C3 */
         case 91:
-            d->drawbars[2].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C4 */
         case 93:
-            d->drawbars[3].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C5 */
         case 73:
-            d->drawbars[4].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C6 */
         case 72:
-            d->drawbars[5].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C7 */
         case 5:
-            d->drawbars[6].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C8 */
         case 84:
-            d->drawbars[7].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C9 */
         case 7:
-            d->drawbars[8].stop = scale_pot_long(control.value, 0, 8);
             break;
         /* C10 */
         case 75:
-            d->volume = scale_pot_double(control.value, 0.0, 2.0);
             break;
         /* C11 */
         case 76:
@@ -389,14 +361,12 @@ void poll_sequencer(struct dioxide *d) {
             break;
         case SND_SEQ_EVENT_CONTROLLER:
             handle_controller(d, event->data.control);
-            update_draws(d);
             break;
         case SND_SEQ_EVENT_PGMCHANGE:
             handle_program_change(d, event->data.control);
             break;
         case SND_SEQ_EVENT_PITCHBEND:
             d->pitch_bend = event->data.control.value;
-            update_pitch(d);
             break;
         default:
             printf("Got event type %u\n", type);
