@@ -42,6 +42,10 @@ void setup_sound(struct dioxide *d) {
     wanted->format = actual.format;
     wanted->samples = actual.samples;
 
+    d->vibrato.center = six_cents;
+    d->vibrato.amplitude = six_cents - 1;
+    d->vibrato.rate = 6;
+
     d->volume = 0.7;
 
     d->lpf_cutoff = d->spec.freq / 2;
@@ -73,8 +77,18 @@ void write_sound(void *private, Uint8 *stream, int len) {
     samples = malloc(len * sizeof(float));
     backburner = malloc(len * sizeof(float));
 
+    for (i = 0; i < len; i++) {
+        if (d->adsr_phase == ADSR_SUSTAIN) {
+            accumulator = step_lfo(d, &d->vibrato, 1);
+            backburner[i] = d->pitch * accumulator;
+        } else {
+            backburner[i] = d->pitch;
+        }
+    }
+
     plugin = d->plugin_chain;
 
+    plugin->desc->connect_port(plugin->handle, plugin->input, backburner);
     plugin->desc->connect_port(plugin->handle, plugin->output, samples);
     plugin->desc->run(plugin->handle, len);
 #if 0
@@ -173,7 +187,7 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_DECAY:
             if (d->adsr_volume > 0.73) {
-                d->adsr_volume -= 0.001;
+                d->adsr_volume -= 0.00001;
             } else {
                 d->adsr_volume = 0.73;
                 d->adsr_phase = ADSR_SUSTAIN;
@@ -192,10 +206,6 @@ void update_adsr(struct dioxide *d) {
             break;
     }
 }
-
-static double step_up = 1.0594630943592953;
-static double step_down = 0.94387431268169353;
-static double inv_log_2 = 1.4426950408889634;
 
 void update_pitch(struct dioxide *d) {
     double note, bend, target_pitch, ratio;
