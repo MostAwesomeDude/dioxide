@@ -52,9 +52,6 @@ struct dioxide {
 
     struct lfo vibrato;
 
-    int rudess;
-    double second_phase;
-
     float chorus_delay;
 
     float lpf_cutoff;
