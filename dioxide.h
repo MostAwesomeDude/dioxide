@@ -38,6 +38,8 @@ static double step_down = 0.94387431268169353;
 
 struct dioxide {
     snd_seq_t *seq;
+    int seq_port;
+    int connected;
 
     struct SDL_AudioSpec spec;
 
