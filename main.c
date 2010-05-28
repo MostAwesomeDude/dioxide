@@ -229,10 +229,10 @@ void update_pitch(struct dioxide *d) {
     ratio = target_pitch / d->pitch;
 
     if ((d->pitch < 20) ||
-        (step_up > ratio > step_down)) {
+        ((step_up > ratio) && (ratio > step_down))) {
         d->pitch = target_pitch;
     } else {
-        d->pitch *= pow(2, (log(ratio) / inv_log_2) * 0.5);
+        d->pitch = pow(M_E, log(d->pitch) + log(ratio) / 4);
     }
 }
 

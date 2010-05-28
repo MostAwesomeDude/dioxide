@@ -35,7 +35,6 @@ enum adsr {
 static double six_cents = 1.0034717485095028;
 static double step_up = 1.0594630943592953;
 static double step_down = 0.94387431268169353;
-static double inv_log_2 = 1.4426950408889634;
 
 struct dioxide {
     snd_seq_t *seq;
