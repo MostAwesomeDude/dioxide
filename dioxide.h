@@ -54,7 +54,7 @@ struct dioxide {
     int rudess;
     double second_phase;
 
-    float chorus_width;
+    float chorus_delay;
 
     float lpf_cutoff;
     float lpf_resonance;

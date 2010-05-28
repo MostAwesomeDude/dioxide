@@ -144,10 +144,12 @@ void hook_plugins(struct dioxide *d) {
     if (!plugin) {
         printf("couldn't set up chorus!\n");
     } else {
-        plugin->desc->connect_port(plugin->handle, 2, &d->chorus_width);
+        plugin->desc->connect_port(plugin->handle, 1, &d->chorus_delay);
 
+        static float chorus_width = 7;
         static float chorus_feedforward = 0.5;
         static float chorus_feedback = 0.4;
+        plugin->desc->connect_port(plugin->handle, 2, &chorus_width);
         plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
         plugin->desc->connect_port(plugin->handle, 6, &chorus_feedback);
     }

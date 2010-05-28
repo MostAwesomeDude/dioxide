@@ -197,7 +197,7 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_RELEASE:
             if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= 0.001;
+                d->adsr_volume -= 0.0001;
             } else {
                 d->adsr_volume = 0.0;
             }
@@ -259,7 +259,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
-            d->chorus_width = scale_pot_float(control.value, 0.5, 10.0);
+            d->chorus_delay = scale_pot_float(control.value, 2.5, 40.0);
             break;
         /* C2 */
         case 71:
@@ -296,7 +296,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         case 1:
             d->lpf_cutoff =
                 scale_pot_float(control.value, 100, d->spec.freq / 3);
-            //d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         default:
             printf("Controller %d\n", control.param);
