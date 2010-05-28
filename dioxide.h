@@ -75,3 +75,7 @@ void cleanup_plugins(struct dioxide *d);
 
 struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
                                         unsigned id);
+
+void setup_sequencer(struct dioxide *d);
+void poll_sequencer(struct dioxide *d);
+void solicit_connections(struct dioxide *d);
