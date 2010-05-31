@@ -44,12 +44,12 @@ void setup_sound(struct dioxide *d) {
 
     d->vibrato.center = six_cents;
     d->vibrato.amplitude = six_cents - 1;
-    d->vibrato.rate = 6;
+    d->vibrato.rate = 5;
 
     d->volume = 0.7;
 
     d->lpf_cutoff = d->spec.freq / 3;
-    d->lpf_resonance = 2.0;
+    d->lpf_resonance = 4.0;
 
     printf("Initialized basic synth parameters, frame length is %d usec\n",
         (1000 * 1000 * actual.samples / actual.freq));
@@ -78,12 +78,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
     backburner = malloc(len * sizeof(float));
 
     for (i = 0; i < len; i++) {
-        if (d->adsr_phase == ADSR_SUSTAIN) {
-            accumulator = step_lfo(d, &d->vibrato, 1);
-            backburner[i] = d->pitch * accumulator;
-        } else {
-            backburner[i] = d->pitch;
-        }
+        accumulator = step_lfo(d, &d->vibrato, 1);
+        backburner[i] = d->pitch * accumulator;
     }
 
     plugin = d->plugin_chain;
@@ -168,10 +164,10 @@ void update_adsr(struct dioxide *d) {
             }
             break;
         case ADSR_DECAY:
-            if (d->adsr_volume > 0.73) {
+            if (d->adsr_volume > 0.88) {
                 d->adsr_volume -= 0.00001;
             } else {
-                d->adsr_volume = 0.73;
+                d->adsr_volume = 0.88;
                 d->adsr_phase = ADSR_SUSTAIN;
             }
             break;
@@ -179,7 +175,7 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_RELEASE:
             if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= 0.0001;
+                d->adsr_volume -= 0.001;
             } else {
                 d->adsr_volume = 0.0;
             }
@@ -282,6 +278,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
+            d->vibrato.rate = scale_pot_float(control.value, 5, .5);
             break;
         default:
             printf("Controller %d\n", control.param);
