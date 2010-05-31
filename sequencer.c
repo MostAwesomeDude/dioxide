@@ -88,7 +88,9 @@ void poll_sequencer(struct dioxide *d) {
             d->pitch_bend = event->data.control.value;
             break;
         case SND_SEQ_EVENT_PORT_SUBSCRIBED:
+            break;
         case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
+            d->connected = 0;
             break;
         default:
             printf("Got event type %u\n", type);
