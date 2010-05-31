@@ -48,7 +48,7 @@ void setup_sound(struct dioxide *d) {
 
     d->volume = 0.7;
 
-    d->lpf_cutoff = d->spec.freq / 2;
+    d->lpf_cutoff = d->spec.freq / 3;
     d->lpf_resonance = 2.0;
 
     printf("Initialized basic synth parameters, frame length is %d usec\n",
@@ -282,8 +282,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            d->lpf_cutoff =
-                scale_pot_float(control.value, 880, d->spec.freq / 4);
             break;
         default:
             printf("Controller %d\n", control.param);
