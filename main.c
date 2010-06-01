@@ -23,7 +23,7 @@ void setup_sound(struct dioxide *d) {
     double temp;
     unsigned i;
 
-    wanted->freq = 48000;
+    wanted->freq = 22050;
     wanted->format = AUDIO_S16;
     wanted->channels = 1;
     wanted->samples = 512;
@@ -207,7 +207,8 @@ void update_pitch(struct dioxide *d) {
     ratio = target_pitch / d->pitch;
 
     if ((d->pitch < 20) ||
-        ((step_up > ratio) && (ratio > step_down))) {
+        ((step_up > ratio) && (ratio > step_down)) ||
+        !d->gliss) {
         d->pitch = target_pitch;
     } else {
         d->pitch = pow(M_E, log(d->pitch) + log(ratio) / 4);
@@ -291,6 +292,7 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.value) {
         /* C18 */
         case 0:
+            d->gliss = !d->gliss;
             break;
         default:
             break;
