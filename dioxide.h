@@ -33,6 +33,7 @@ enum adsr {
 };
 
 static double six_cents = 1.0034717485095028;
+static double twelve_cents = 1.0069555500567189;
 static double step_up = 1.0594630943592953;
 static double step_down = 0.94387431268169353;
 

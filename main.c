@@ -247,7 +247,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C2 */
         case 71:
-            d->lpf_resonance = scale_pot_float(control.value, 0.0, 1.0);
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         /* C3 */
         case 91:
@@ -279,7 +279,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            d->vibrato.rate = scale_pot_float(control.value, 5, .5);
+            d->vibrato.rate = scale_pot_float(control.value, .5, 7);
             break;
         default:
             printf("Controller %d\n", control.param);
