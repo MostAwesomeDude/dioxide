@@ -53,9 +53,12 @@ struct dioxide {
 
     int gliss;
 
-    struct lfo vibrato;
-
     float chorus_delay;
+
+    float phaser_rate;
+    float phaser_depth;
+    float phaser_spread;
+    float phaser_feedback;
 
     float lpf_cutoff;
     float lpf_resonance;

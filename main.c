@@ -42,10 +42,6 @@ void setup_sound(struct dioxide *d) {
     wanted->format = actual.format;
     wanted->samples = actual.samples;
 
-    d->vibrato.center = six_cents;
-    d->vibrato.amplitude = six_cents - 1;
-    d->vibrato.rate = 5;
-
     d->volume = 0.7;
 
     d->lpf_cutoff = d->spec.freq / 3;
@@ -78,8 +74,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     backburner = malloc(len * sizeof(float));
 
     for (i = 0; i < len; i++) {
-        accumulator = step_lfo(d, &d->vibrato, 1);
-        backburner[i] = d->pitch * accumulator;
+        backburner[i] = d->pitch;
     }
 
     plugin = d->plugin_chain;
@@ -243,17 +238,20 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
-            d->chorus_delay = scale_pot_float(control.value, 2.5, 40.0);
+            d->chorus_delay = scale_pot_log_float(control.value, 2.5, 40);
             break;
         /* C2 */
         case 71:
-            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
+            d->phaser_rate = scale_pot_float(control.value, 0, 1);
+            d->phaser_depth = scale_pot_float(control.value, 0, 1);
             break;
         /* C3 */
         case 91:
+            d->phaser_spread = scale_pot_float(control.value, 0, 1.5708);
             break;
         /* C4 */
         case 93:
+            d->phaser_feedback = scale_pot_float(control.value, 0, 0.999);
             break;
         /* C5 */
         case 73:
@@ -269,6 +267,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C9 */
         case 7:
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         /* C10 */
         case 75:
@@ -288,7 +287,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            d->vibrato.rate = scale_pot_float(control.value, .5, 7);
             break;
         default:
             printf("Controller %d\n", control.param);

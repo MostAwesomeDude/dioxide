@@ -107,6 +107,11 @@ void setup_plugins(struct dioxide *d) {
     plugin->input = 0;
     plugin->output = 7;
 
+    /* Phaser */
+    plugin = select_plugin(d, 2586);
+    plugin->input = 0;
+    plugin->output = 5;
+
     /* LPF */
     plugin = select_plugin(d, 1672);
     plugin->input = 2;
@@ -138,11 +143,23 @@ struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
 void hook_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
 
+    /* Phaser */
+    plugin = find_plugin_by_id(d->plugin_chain, 2586);
+
+    if (!plugin) {
+        printf("Couldn't set up phaser!\n");
+    } else {
+        plugin->desc->connect_port(plugin->handle, 1, &d->phaser_rate);
+        plugin->desc->connect_port(plugin->handle, 2, &d->phaser_depth);
+        plugin->desc->connect_port(plugin->handle, 3, &d->phaser_spread);
+        plugin->desc->connect_port(plugin->handle, 4, &d->phaser_feedback);
+    }
+
     /* Chorus */
     plugin = find_plugin_by_id(d->plugin_chain, 2583);
 
     if (!plugin) {
-        printf("couldn't set up chorus!\n");
+        printf("Couldn't set up chorus!\n");
     } else {
         plugin->desc->connect_port(plugin->handle, 1, &d->chorus_delay);
 
@@ -153,6 +170,7 @@ void hook_plugins(struct dioxide *d) {
         plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
         plugin->desc->connect_port(plugin->handle, 6, &chorus_feedback);
     }
+
 
     /* LPF */
     plugin = find_plugin_by_id(d->plugin_chain, 1672);
