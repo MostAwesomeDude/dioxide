@@ -301,7 +301,12 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         case 0:
             d->gliss = !d->gliss;
             break;
+        /* C19 */
+        case 1:
+            d->legato = !d->legato;
+            break;
         default:
+            printf("Program change %d\n", control.value);
             break;
     }
 }

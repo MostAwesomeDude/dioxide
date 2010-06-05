@@ -52,6 +52,7 @@ struct dioxide {
     unsigned note_count;
 
     int gliss;
+    int legato;
 
     float chorus_delay;
 

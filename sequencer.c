@@ -51,7 +51,7 @@ void poll_sequencer(struct dioxide *d) {
                     break;
                 }
 
-                if (!d->note_count) {
+                if (!d->note_count || !d->legato) {
                     d->adsr_phase = ADSR_ATTACK;
                 }
 
