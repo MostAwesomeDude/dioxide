@@ -1,27 +1,105 @@
+#include <math.h>
+
 #include "dioxide.h"
 
-void setup_sequencer(struct dioxide *d) {
-    int retval;
+long scale_pot_long(unsigned pot, long low, long high) {
+    long l = pot * (high - low);
 
-    retval = snd_seq_open(&d->seq, "default",
-        SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK);
+    return l / 127 + low;
+}
 
-    if (retval) {
-        printf("Couldn't open sequencer: %s\n", snd_strerror(retval));
-        exit(retval);
+float scale_pot_float(unsigned pot, float low, float high) {
+    float f = pot / 127.0;
+
+    return f * (high - low) + low;
+}
+
+float scale_pot_log_float(unsigned pot, float low, float high) {
+    float f = pot / 127.0;
+
+    low = log(low);
+    high = log(high);
+
+    f = f * (high - low) + low;
+
+    return pow(M_E, f);
+}
+
+void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
+    /* Oxygen pots and dials all go from 0 to 127. */
+    switch (control.param) {
+        /* C1 */
+        case 74:
+            d->chorus_delay = scale_pot_log_float(control.value, 2.5, 40);
+            break;
+        /* C2 */
+        case 71:
+            d->phaser_rate = scale_pot_float(control.value, 0, 1);
+            d->phaser_depth = scale_pot_float(control.value, 0, 1);
+            break;
+        /* C3 */
+        case 91:
+            d->phaser_spread = scale_pot_float(control.value, 0, 1.5708);
+            break;
+        /* C4 */
+        case 93:
+            d->phaser_feedback = scale_pot_float(control.value, 0, 0.999);
+            break;
+        /* C5 */
+        case 73:
+            break;
+        /* C6 */
+        case 72:
+            break;
+        /* C7 */
+        case 5:
+            break;
+        /* C8 */
+        case 84:
+            break;
+        /* C9 */
+        case 7:
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
+            break;
+        /* C10 */
+        case 75:
+            d->volume = scale_pot_float(control.value, 0.0, 1.0);
+            break;
+        /* C11 */
+        case 76:
+            d->attack_time = scale_pot_float(control.value, 0.001, 1.0);
+            break;
+        /* C12 */
+        case 92:
+            d->decay_time = scale_pot_float(control.value, 0.001, 1.0);
+            break;
+        /* C13 */
+        case 95:
+            d->release_time = scale_pot_float(control.value, 0.001, 1.0);
+            break;
+        /* C34 */
+        case 1:
+            break;
+        default:
+            printf("Controller %d\n", control.param);
+            printf("Value %d\n", control.value);
+            break;
     }
+}
 
-    snd_seq_set_client_name(d->seq, "Dioxide");
-
-    retval = snd_seq_create_simple_port(d->seq, "Dioxide",
-        SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
-        SND_SEQ_PORT_TYPE_MIDI_GENERIC);
-
-    if (retval < 0) {
-        printf("Couldn't open port: %s\n", snd_strerror(retval));
-        exit(retval);
-    } else {
-        d->seq_port = retval;
+void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
+    switch (control.value) {
+        /* C18 */
+        case 0:
+            d->gliss = !d->gliss;
+            break;
+        /* C19 */
+        case 1:
+            d->legato = !d->legato;
+            break;
+        default:
+            printf("Program change %d\n", control.value);
+            break;
     }
 }
 
@@ -53,6 +131,7 @@ void poll_sequencer(struct dioxide *d) {
 
                 if (!d->note_count || !d->legato) {
                     d->adsr_phase = ADSR_ATTACK;
+                    d->adsr_volume = 0.0;
                 }
 
                 d->notes[d->note_count] = event->data.note.note;
@@ -77,6 +156,9 @@ void poll_sequencer(struct dioxide *d) {
 
             if (!d->note_count) {
                 d->adsr_phase = ADSR_RELEASE;
+            } else if (!d->legato) {
+                d->adsr_phase = ADSR_ATTACK;
+                d->adsr_volume = 0.0;
             }
 
             break;
@@ -148,5 +230,30 @@ void solicit_connections(struct dioxide *d) {
                 return;
             }
         }
+   }
+}
+
+void setup_sequencer(struct dioxide *d) {
+    int retval;
+
+    retval = snd_seq_open(&d->seq, "default",
+        SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK);
+
+    if (retval) {
+        printf("Couldn't open sequencer: %s\n", snd_strerror(retval));
+        exit(retval);
+    }
+
+    snd_seq_set_client_name(d->seq, "Dioxide");
+
+    retval = snd_seq_create_simple_port(d->seq, "Dioxide",
+        SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+        SND_SEQ_PORT_TYPE_MIDI_GENERIC);
+
+    if (retval < 0) {
+        printf("Couldn't open port: %s\n", snd_strerror(retval));
+        exit(retval);
+    } else {
+        d->seq_port = retval;
     }
 }
