@@ -157,7 +157,7 @@ void update_adsr(struct dioxide *d) {
     switch (d->adsr_phase) {
         case ADSR_ATTACK:
             if (d->adsr_volume < 1.0) {
-                d->adsr_volume += 0.005;
+                d->adsr_volume += 1.0 / (d->attack_time * d->spec.freq);
             } else {
                 d->adsr_volume = 1.0;
                 d->adsr_phase = ADSR_DECAY;
@@ -165,7 +165,7 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_DECAY:
             if (d->adsr_volume > 0.88) {
-                d->adsr_volume -= 0.00001;
+                d->adsr_volume -= 0.12 / (d->decay_time * d->spec.freq);
             } else {
                 d->adsr_volume = 0.88;
                 d->adsr_phase = ADSR_SUSTAIN;
@@ -175,7 +175,7 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_RELEASE:
             if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= 0.001;
+                d->adsr_volume -= 0.88 / (d->release_time * d->spec.freq);
             } else {
                 d->adsr_volume = 0.0;
             }
@@ -276,6 +276,15 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C11 */
         case 76:
+            d->attack_time = scale_pot_float(control.value, 0.001, 1.0);
+            break;
+        /* C12 */
+        case 92:
+            d->decay_time = scale_pot_float(control.value, 0.001, 1.0);
+            break;
+        /* C13 */
+        case 95:
+            d->release_time = scale_pot_float(control.value, 0.001, 1.0);
             break;
         /* C34 */
         case 1:
