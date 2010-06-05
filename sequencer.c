@@ -77,6 +77,9 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         case 95:
             d->release_time = scale_pot_float(control.value, 0.001, 1.0);
             break;
+        /* C14 */
+        case 10:
+            break;
         /* C34 */
         case 1:
             break;
