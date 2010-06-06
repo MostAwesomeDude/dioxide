@@ -58,7 +58,7 @@ struct ladspa_plugin* select_plugin(struct dioxide *d, unsigned id) {
     }
     if (!iter) {
         printf("Couldn't select plugin %d\n", id);
-        return;
+        return NULL;
     }
 
     plugin = calloc(1, sizeof(struct ladspa_plugin));
@@ -68,7 +68,7 @@ struct ladspa_plugin* select_plugin(struct dioxide *d, unsigned id) {
     if (!plugin->handle) {
         printf("Failed to instantiate plugin %d\n", id);
         free(plugin);
-        return;
+        return NULL;
     }
 
     if (plugin->desc->activate) {
@@ -99,23 +99,31 @@ void setup_plugins(struct dioxide *d) {
 
     /* Sawtooth generator */
     plugin = select_plugin(d, 1641);
-    plugin->input = 0;
-    plugin->output = 1;
+    if (plugin) {
+        plugin->input = 0;
+        plugin->output = 1;
+    }
 
     /* Chorus */
     plugin = select_plugin(d, 2583);
-    plugin->input = 0;
-    plugin->output = 7;
+    if (plugin) {
+        plugin->input = 0;
+        plugin->output = 7;
+    }
 
     /* Phaser */
     plugin = select_plugin(d, 2586);
-    plugin->input = 0;
-    plugin->output = 5;
+    if (plugin) {
+        plugin->input = 0;
+        plugin->output = 5;
+    }
 
     /* LPF */
     plugin = select_plugin(d, 1672);
-    plugin->input = 2;
-    plugin->output = 3;
+    if (plugin) {
+        plugin->input = 2;
+        plugin->output = 3;
+    }
 
     printf("Prepared plugin chain\n");
     plugin = d->plugin_chain;
