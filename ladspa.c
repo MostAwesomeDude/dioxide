@@ -98,9 +98,8 @@ void setup_plugins(struct dioxide *d) {
     open_plugin(d, "lp4pole_1671.so");
 
     /* Sawtooth generator */
-    plugin = select_plugin(d, 1641);
+    plugin = select_plugin(d, 1642);
     if (plugin) {
-        plugin->input = 0;
         plugin->output = 1;
     }
 
@@ -151,6 +150,16 @@ struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
 void hook_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
 
+    /* Sawtooth */
+    plugin = find_plugin_by_id(d->plugin_chain, 1642);
+
+    if (!plugin) {
+        printf("Couldn't set up sawtooth!\n");
+        exit(EXIT_FAILURE);
+    } else {
+        plugin->desc->connect_port(plugin->handle, 0, &d->pitch);
+    }
+
     /* Phaser */
     plugin = find_plugin_by_id(d->plugin_chain, 2586);
 
@@ -178,7 +187,6 @@ void hook_plugins(struct dioxide *d) {
         plugin->desc->connect_port(plugin->handle, 5, &chorus_feedforward);
         plugin->desc->connect_port(plugin->handle, 6, &chorus_feedback);
     }
-
 
     /* LPF */
     plugin = find_plugin_by_id(d->plugin_chain, 1672);

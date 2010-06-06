@@ -73,13 +73,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
     samples = malloc(len * sizeof(float));
     backburner = malloc(len * sizeof(float));
 
-    for (i = 0; i < len; i++) {
-        backburner[i] = d->pitch;
-    }
-
     plugin = d->plugin_chain;
 
-    plugin->desc->connect_port(plugin->handle, plugin->input, backburner);
     plugin->desc->connect_port(plugin->handle, plugin->output, samples);
     plugin->desc->run(plugin->handle, len);
 #if 0
