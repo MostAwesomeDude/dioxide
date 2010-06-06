@@ -5,7 +5,6 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 
 PKG_CHECK_MODULES(ALSA, alsa)
-PKG_CHECK_MODULES(FFTW, fftw3)
 
 AM_PATH_SDL([1.2.0])
 
