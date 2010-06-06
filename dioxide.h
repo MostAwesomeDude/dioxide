@@ -20,7 +20,7 @@ struct ladspa_plugin {
 
     unsigned input, output;
 
-    LADSPA_Descriptor *desc;
+    const LADSPA_Descriptor *desc;
     LADSPA_Handle handle;
     struct ladspa_plugin *next;
 };
