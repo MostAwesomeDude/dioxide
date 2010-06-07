@@ -23,7 +23,7 @@ void setup_sound(struct dioxide *d) {
     double temp;
     unsigned i;
 
-    wanted->freq = 22050;
+    wanted->freq = 48000;
     wanted->format = AUDIO_S16;
     wanted->channels = 1;
     wanted->samples = 512;
@@ -42,9 +42,11 @@ void setup_sound(struct dioxide *d) {
     wanted->format = actual.format;
     wanted->samples = actual.samples;
 
+    d->inverse_sample_rate = 1.0 / actual.freq;
+
     d->volume = 0.7;
 
-    d->lpf_cutoff = d->spec.freq / 3;
+    d->lpf_cutoff = d->spec.freq * 0.5;
     d->lpf_resonance = 4.0;
 
     printf("Initialized basic synth parameters, frame length is %d usec\n",
@@ -147,7 +149,7 @@ void update_adsr(struct dioxide *d) {
     switch (d->adsr_phase) {
         case ADSR_ATTACK:
             if (d->adsr_volume < 1.0) {
-                d->adsr_volume += 1.0 / (d->attack_time * d->spec.freq);
+                d->adsr_volume += d->inverse_sample_rate / d->attack_time;
             } else {
                 d->adsr_volume = 1.0;
                 d->adsr_phase = ADSR_DECAY;
@@ -155,7 +157,8 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_DECAY:
             if (d->adsr_volume > 0.88) {
-                d->adsr_volume -= 0.12 / (d->decay_time * d->spec.freq);
+                d->adsr_volume -= 0.12 * d->inverse_sample_rate
+                    / d->decay_time;
             } else {
                 d->adsr_volume = 0.88;
                 d->adsr_phase = ADSR_SUSTAIN;
@@ -165,7 +168,8 @@ void update_adsr(struct dioxide *d) {
             break;
         case ADSR_RELEASE:
             if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= 0.88 / (d->release_time * d->spec.freq);
+                d->adsr_volume -= 0.88 * d->inverse_sample_rate
+                    / d->release_time;
             } else {
                 d->adsr_volume = 0.0;
             }

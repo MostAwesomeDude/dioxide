@@ -11,7 +11,7 @@ double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count) {
     }
 
     phase = lfo->phase;
-    step = 2 * M_PI * lfo->rate / d->spec.freq;
+    step = 2 * M_PI * lfo->rate * d->inverse_sample_rate;
 
     while (count--) {
         phase += step;

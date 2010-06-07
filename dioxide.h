@@ -43,6 +43,7 @@ struct dioxide {
     int connected;
 
     struct SDL_AudioSpec spec;
+    float inverse_sample_rate;
 
     double volume;
     double phase;
