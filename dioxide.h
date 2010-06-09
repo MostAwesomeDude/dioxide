@@ -52,7 +52,9 @@ struct dioxide {
     unsigned notes[16];
     unsigned note_count;
 
-    float *front_buffer, *back_buffer, *delay_buffer;
+    float *front_buffer, *back_buffer;
+    signed short *delay_buffer;
+    unsigned delay_buffer_size, delay_buffer_position;
 
     int gliss;
     int legato;

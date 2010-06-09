@@ -66,7 +66,8 @@ void setup_sound(struct dioxide *d) {
 
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
-    d->delay_buffer = malloc(actual.freq * 5 * sizeof(short));
+    d->delay_buffer_size = actual.freq * 5;
+    d->delay_buffer = malloc(d->delay_buffer_size * sizeof(short));
 }
 
 void close_sound(struct dioxide *d) {
@@ -83,11 +84,18 @@ void write_sound(void *private, Uint8 *stream, int len) {
     double accumulator;
     unsigned i;
     int retval;
+    int delay_write_head, delay_read_head;
     float *samples = d->front_buffer, *backburner = d->back_buffer, *ftemp;
-    signed short *buf = (signed short*)stream;
+    signed short short_temp, *buf = (signed short*)stream;
     struct timeval then, now;
     unsigned long timediff;
     struct ladspa_plugin *plugin;
+
+    unsigned delay_samples = d->spec.freq;
+    delay_write_head = d->delay_buffer_position;
+    delay_read_head = delay_write_head +
+        (d->delay_buffer_size - delay_samples);
+    delay_read_head %= d->delay_buffer_size;
 
     gettimeofday(&then, NULL);
 
@@ -97,9 +105,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     /* Update pitch only once per buffer. */
     update_pitch(d);
-
-    samples = malloc(len * sizeof(float));
-    backburner = malloc(len * sizeof(float));
 
     plugin = d->plugin_chain;
 
@@ -152,12 +157,23 @@ void write_sound(void *private, Uint8 *stream, int len) {
             accumulator = -32768;
         }
 
-        *buf = (signed short)accumulator;
+        short_temp = (signed short)accumulator;
+
+        short_temp += d->delay_buffer[delay_read_head];
+        d->delay_buffer[delay_read_head] /= 2;
+
+        *buf = short_temp;
         buf++;
+
+        d->delay_buffer[delay_write_head] = short_temp / 2;
+
+        delay_read_head++;
+        delay_read_head %= d->delay_buffer_size;
+        delay_write_head++;
+        delay_write_head %= d->delay_buffer_size;
     }
 
-    free(samples);
-    free(backburner);
+    d->delay_buffer_position = delay_write_head;
 
     gettimeofday(&now, NULL);
 
