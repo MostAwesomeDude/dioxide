@@ -32,6 +32,12 @@ enum adsr {
     ADSR_RELEASE,
 };
 
+enum wheel_config {
+    WHEEL_TRADITIONAL,
+    WHEEL_RUDESS,
+    WHEEL_DIVEBOMB,
+};
+
 static double six_cents = 1.0034717485095028;
 static double twelve_cents = 1.0069555500567189;
 static double step_up = 1.0594630943592953;
@@ -48,9 +54,11 @@ struct dioxide {
     double volume;
     double phase;
     float pitch;
-    signed short pitch_bend;
     unsigned notes[16];
     unsigned note_count;
+
+    enum wheel_config pitch_wheel_config;
+    signed short pitch_bend;
 
     float *front_buffer, *back_buffer;
     signed short *delay_buffer;

@@ -232,11 +232,25 @@ void update_pitch(struct dioxide *d) {
         return;
     }
 
-    /* Split the pitch wheel into an upper and lower range. */
-    if (d->pitch_bend >= 0) {
-        bend = d->pitch_bend * (2.0 / 8192.0);
-    } else {
-        bend = d->pitch_bend * (12.0 / 8192.0);
+    switch (d->pitch_wheel_config) {
+        case WHEEL_TRADITIONAL:
+            bend = d->pitch_bend * (2.0 / 8192.0);
+            break;
+        case WHEEL_RUDESS:
+            /* Split the pitch wheel into an upper and lower range. */
+            if (d->pitch_bend >= 0) {
+                bend = d->pitch_bend * (2.0 / 8192.0);
+            } else {
+                bend = d->pitch_bend * (12.0 / 8192.0);
+            }
+            break;
+        case WHEEL_DIVEBOMB:
+            if (d->pitch_bend >= 0) {
+                bend = d->pitch_bend * (24.0 / 8192.0);
+            } else {
+                bend = d->pitch_bend * (36.0 / 8192.0);
+            }
+            break;
     }
 
     note = d->notes[d->note_count - 1];

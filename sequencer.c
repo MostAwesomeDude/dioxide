@@ -91,6 +91,8 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
+            d->pitch_wheel_config = scale_pot_long(control.value,
+                WHEEL_TRADITIONAL, WHEEL_DIVEBOMB);
             break;
         default:
             printf("Controller %d\n", control.param);
