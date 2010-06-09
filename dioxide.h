@@ -54,10 +54,11 @@ struct dioxide {
 
     float *front_buffer, *back_buffer;
     signed short *delay_buffer;
-    unsigned delay_buffer_size, delay_buffer_position;
+    unsigned delay_buffer_size, delay_buffer_position, delay_buffer_samples;
 
     int gliss;
     int legato;
+    int delay;
 
     float chorus_delay;
 

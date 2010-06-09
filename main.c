@@ -91,10 +91,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
     unsigned long timediff;
     struct ladspa_plugin *plugin;
 
-    unsigned delay_samples = d->spec.freq;
     delay_write_head = d->delay_buffer_position;
     delay_read_head = delay_write_head +
-        (d->delay_buffer_size - delay_samples);
+        (d->delay_buffer_size - d->delay_buffer_samples);
     delay_read_head %= d->delay_buffer_size;
 
     gettimeofday(&then, NULL);
@@ -159,18 +158,20 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         short_temp = (signed short)accumulator;
 
-        short_temp += d->delay_buffer[delay_read_head];
-        d->delay_buffer[delay_read_head] /= 2;
+        if (d->delay) {
+            /* No feedforward, really. */
+            d->delay_buffer[delay_write_head] = short_temp / 2;
+            short_temp += d->delay_buffer[delay_read_head];
+            d->delay_buffer[delay_read_head] /= 2;
+
+            delay_read_head++;
+            delay_read_head %= d->delay_buffer_size;
+            delay_write_head++;
+            delay_write_head %= d->delay_buffer_size;
+        }
 
         *buf = short_temp;
         buf++;
-
-        d->delay_buffer[delay_write_head] = short_temp / 2;
-
-        delay_read_head++;
-        delay_read_head %= d->delay_buffer_size;
-        delay_write_head++;
-        delay_write_head %= d->delay_buffer_size;
     }
 
     d->delay_buffer_position = delay_write_head;
@@ -274,6 +275,8 @@ int main() {
     setup_plugins(d);
     hook_plugins(d);
     setup_sequencer(d);
+
+    SDL_PauseAudio(0);
 
     while (!time_to_quit) {
         poll_sequencer(d);
