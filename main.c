@@ -63,6 +63,19 @@ void setup_sound(struct dioxide *d) {
 
     printf("Initialized basic synth parameters, frame length is %d usec\n",
         frame_length);
+
+    d->front_buffer = malloc(actual.samples * sizeof(float));
+    d->back_buffer = malloc(actual.samples * sizeof(float));
+    d->delay_buffer = malloc(actual.freq * 5 * sizeof(short));
+}
+
+void close_sound(struct dioxide *d) {
+    SDL_PauseAudio(1);
+    SDL_CloseAudio();
+
+    free(d->front_buffer);
+    free(d->back_buffer);
+    free(d->delay_buffer);
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -70,7 +83,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     double accumulator;
     unsigned i;
     int retval;
-    float *samples, *backburner, *ftemp;
+    float *samples = d->front_buffer, *backburner = d->back_buffer, *ftemp;
     signed short *buf = (signed short*)stream;
     struct timeval then, now;
     unsigned long timediff;
@@ -240,10 +253,11 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    /* Sound must be set up before plugins, to obtain sample rate. */
     setup_sound(d);
     setup_plugins(d);
-    setup_sequencer(d);
     hook_plugins(d);
+    setup_sequencer(d);
 
     while (!time_to_quit) {
         poll_sequencer(d);
@@ -253,10 +267,10 @@ int main() {
         }
     }
 
+    close_sound(d);
     cleanup_plugins(d);
 
     retval = snd_seq_close(d->seq);
-    SDL_CloseAudio();
 
     free(d);
     exit(retval);
