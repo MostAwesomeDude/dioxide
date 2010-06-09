@@ -52,6 +52,10 @@ void setup_sound(struct dioxide *d) {
 
     d->volume = 0.7;
 
+    d->attack_time = 0.001;
+    d->decay_time = 0.001;
+    d->release_time = 0.001;
+
     d->lpf_cutoff = d->spec.freq * 0.5;
     d->lpf_resonance = 4.0;
 
