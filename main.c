@@ -8,16 +8,11 @@
 #include "dioxide.h"
 
 static int time_to_quit = 0;
-static unsigned long mma = 0, frame_length = 0;
+static unsigned long frame_length = 0;
 
 void handle_sigint(int s) {
     time_to_quit = 1;
     printf("Caught SIGINT, quitting.\n");
-}
-
-void handle_sigalrm(int s) {
-    printf("Average frame length: %lu (%d%%)\n",
-        mma, mma * 100 / frame_length);
 }
 
 void update_adsr(struct dioxide *d);
@@ -161,9 +156,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
     }
 
     timediff = now.tv_usec - then.tv_usec;
-    mma = (9 * mma + timediff) / 10;
 
-    if (timediff > (1000 * 1000 * len * d->inverse_sample_rate)) {
+    if (timediff > frame_length) {
         printf("Long frame: %d usec\n", timediff);
     }
 }
@@ -252,10 +246,6 @@ int main() {
     int retval;
 
     signal(SIGINT, handle_sigint);
-    signal(SIGALRM, handle_sigalrm);
-    getitimer(ITIMER_REAL, &timer);
-    timer.it_value.tv_sec = timer.it_interval.tv_sec = 5;
-    setitimer(ITIMER_REAL, &timer, NULL);
 
     if (!d) {
         exit(EXIT_FAILURE);
