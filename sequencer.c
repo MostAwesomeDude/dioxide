@@ -26,7 +26,6 @@ float scale_pot_log_float(unsigned pot, float low, float high) {
 }
 
 void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
-    static float delay_tempo = 120, delay_tempo_fine = 0;
     /* Oxygen pots and dials all go from 0 to 127. */
     switch (control.param) {
         /* C1 */
@@ -79,11 +78,9 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C14 */
         case 10:
-            delay_tempo = scale_pot_float(control.value, 40, 300);
             break;
         /* C15 */
         case 77:
-            delay_tempo_fine = scale_pot_float(control.value, -10, 10);
             break;
         /* C16 */
         case 78:
@@ -97,9 +94,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             printf("Value %d\n", control.value);
             break;
     }
-
-    d->delay_buffer_samples = d->spec.freq * (60.0) /
-        (delay_tempo + delay_tempo_fine);
 }
 
 void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
@@ -114,11 +108,10 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C20 */
         case 2:
-            d->delay = !d->delay;
+            d->pitch_wheel_config = ++d->pitch_wheel_config % WHEEL_MAX;
             break;
         /* C21 */
         case 3:
-            d->pitch_wheel_config = ++d->pitch_wheel_config % WHEEL_MAX;
             break;
         default:
             printf("Program change %d\n", control.value);

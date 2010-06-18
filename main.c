@@ -50,7 +50,7 @@ void setup_sound(struct dioxide *d) {
 
     d->inverse_sample_rate = 1.0 / actual.freq;
 
-    d->volume = 0.7;
+    d->volume = 1.0;
 
     d->attack_time = 0.001;
     d->decay_time = 0.001;
@@ -66,8 +66,6 @@ void setup_sound(struct dioxide *d) {
 
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
-    d->delay_buffer_size = actual.freq * 5;
-    d->delay_buffer = malloc(d->delay_buffer_size * sizeof(short));
 }
 
 void close_sound(struct dioxide *d) {
@@ -76,7 +74,6 @@ void close_sound(struct dioxide *d) {
 
     free(d->front_buffer);
     free(d->back_buffer);
-    free(d->delay_buffer);
 }
 
 void write_sound(void *private, Uint8 *stream, int len) {
@@ -84,17 +81,11 @@ void write_sound(void *private, Uint8 *stream, int len) {
     double accumulator;
     unsigned i;
     int retval;
-    int delay_write_head, delay_read_head;
     float *samples = d->front_buffer, *backburner = d->back_buffer, *ftemp;
     signed short short_temp, *buf = (signed short*)stream;
     struct timeval then, now;
     unsigned long timediff;
     struct ladspa_plugin *plugin;
-
-    delay_write_head = d->delay_buffer_position;
-    delay_read_head = delay_write_head +
-        (d->delay_buffer_size - d->delay_buffer_samples);
-    delay_read_head %= d->delay_buffer_size;
 
     gettimeofday(&then, NULL);
 
@@ -158,23 +149,9 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         short_temp = (signed short)accumulator;
 
-        if (d->delay) {
-            /* No feedforward, really. */
-            d->delay_buffer[delay_write_head] = short_temp / 2;
-            short_temp += d->delay_buffer[delay_read_head];
-            d->delay_buffer[delay_read_head] /= 2;
-
-            delay_read_head++;
-            delay_read_head %= d->delay_buffer_size;
-            delay_write_head++;
-            delay_write_head %= d->delay_buffer_size;
-        }
-
         *buf = short_temp;
         buf++;
     }
-
-    d->delay_buffer_position = delay_write_head;
 
     gettimeofday(&now, NULL);
 
