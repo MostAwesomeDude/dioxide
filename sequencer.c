@@ -64,7 +64,6 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C10 */
         case 75:
-            d->volume = scale_pot_float(control.value, 0.0, 1.0);
             break;
         /* C11 */
         case 76:
@@ -91,8 +90,7 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C34 */
         case 1:
-            d->pitch_wheel_config = scale_pot_long(control.value,
-                WHEEL_TRADITIONAL, WHEEL_DIVEBOMB);
+            d->volume = scale_pot_float(control.value, 0.0, 1.0);
             break;
         default:
             printf("Controller %d\n", control.param);
@@ -117,6 +115,11 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
         /* C20 */
         case 2:
             d->delay = !d->delay;
+            break;
+        /* C21 */
+        case 3:
+            d->pitch_wheel_config = ++d->pitch_wheel_config % WHEEL_MAX;
+            break;
         default:
             printf("Program change %d\n", control.value);
             break;

@@ -36,6 +36,7 @@ enum wheel_config {
     WHEEL_TRADITIONAL,
     WHEEL_RUDESS,
     WHEEL_DIVEBOMB,
+    WHEEL_MAX,
 };
 
 static double six_cents = 1.0034717485095028;
