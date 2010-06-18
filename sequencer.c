@@ -196,6 +196,12 @@ void poll_sequencer(struct dioxide *d) {
             printf("Got event type %u\n", type);
             break;
     }
+
+    if (d->note_count || d->adsr_volume) {
+        SDL_PauseAudio(0);
+    } else {
+        SDL_PauseAudio(1);
+    }
 }
 
 void solicit_connections(struct dioxide *d) {
