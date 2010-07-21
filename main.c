@@ -61,6 +61,8 @@ void setup_sound(struct dioxide *d) {
 
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
+
+    d->metal = &uranium;
 }
 
 void close_sound(struct dioxide *d) {
@@ -91,7 +93,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     /* Update pitch only once per buffer. */
     update_pitch(d);
 
-    generate_uranium(d, samples, len);
+    d->metal->generate(d, samples, len);
 
 #if 0
     printf("initialsamples = [\n");

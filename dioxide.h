@@ -44,6 +44,12 @@ static double twelve_cents = 1.0069555500567189;
 static double step_up = 1.0594630943592953;
 static double step_down = 0.94387431268169353;
 
+struct dioxide;
+
+struct element {
+    void (*generate)(struct dioxide *d, float *buffer, unsigned count);
+};
+
 struct dioxide {
     snd_seq_t *seq;
     int seq_port;
@@ -84,6 +90,8 @@ struct dioxide {
 
     struct ladspa_plugin *available_plugins;
     struct ladspa_plugin *plugin_chain;
+
+    struct element *metal;
 };
 
 double step_lfo(struct dioxide *d, struct lfo *lfo, unsigned count);
@@ -99,4 +107,4 @@ void setup_sequencer(struct dioxide *d);
 void poll_sequencer(struct dioxide *d);
 void solicit_connections(struct dioxide *d);
 
-void generate_uranium(struct dioxide *d, float *buffer, unsigned count);
+struct element uranium;

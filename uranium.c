@@ -47,3 +47,7 @@ void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
         buffer++;
     }
 }
+
+struct element uranium = {
+    generate_uranium,
+};
