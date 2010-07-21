@@ -48,6 +48,7 @@ struct dioxide;
 
 struct element {
     void (*generate)(struct dioxide *d, float *buffer, unsigned count);
+    void (*adsr)(struct dioxide *d);
 };
 
 struct dioxide {

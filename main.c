@@ -15,7 +15,6 @@ void handle_sigint(int s) {
     printf("Caught SIGINT, quitting.\n");
 }
 
-void update_adsr(struct dioxide *d);
 void update_pitch(struct dioxide *d);
 void write_sound(void *private, Uint8 *stream, int len);
 
@@ -132,7 +131,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
-        update_adsr(d);
+        d->metal->adsr(d);
 
         accumulator *= d->adsr_volume * d->volume * -32767;
 
@@ -148,6 +147,12 @@ void write_sound(void *private, Uint8 *stream, int len) {
         buf++;
     }
 
+    if (d->adsr_volume) {
+        SDL_PauseAudio(0);
+    } else {
+        SDL_PauseAudio(1);
+    }
+
     gettimeofday(&now, NULL);
 
     while (now.tv_sec != then.tv_sec) {
@@ -159,46 +164,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     if (timediff > frame_length) {
         printf("Long frame: %d usec\n", timediff);
-    }
-}
-
-void update_adsr(struct dioxide *d) {
-    switch (d->adsr_phase) {
-        case ADSR_ATTACK:
-            if (d->adsr_volume < 1.0) {
-                d->adsr_volume += d->inverse_sample_rate / d->attack_time;
-            } else {
-                d->adsr_volume = 1.0;
-                d->adsr_phase = ADSR_DECAY;
-            }
-            break;
-        case ADSR_DECAY:
-            if (d->adsr_volume > 0.88) {
-                d->adsr_volume -= 0.12 * d->inverse_sample_rate
-                    / d->decay_time;
-            } else {
-                d->adsr_volume = 0.88;
-                d->adsr_phase = ADSR_SUSTAIN;
-            }
-            break;
-        case ADSR_SUSTAIN:
-            break;
-        case ADSR_RELEASE:
-            if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= 0.88 * d->inverse_sample_rate
-                    / d->release_time;
-            } else {
-                d->adsr_volume = 0.0;
-            }
-            break;
-        default:
-            break;
-    }
-
-    if (d->adsr_volume) {
-        SDL_PauseAudio(0);
-    } else {
-        SDL_PauseAudio(1);
     }
 }
 
