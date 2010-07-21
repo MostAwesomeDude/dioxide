@@ -170,7 +170,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
 void update_pitch(struct dioxide *d) {
     double note, bend, target_pitch, ratio;
 
-    if (!d->note_count) {
+    if (!d->notes) {
         return;
     }
 
@@ -195,7 +195,7 @@ void update_pitch(struct dioxide *d) {
             break;
     }
 
-    note = d->notes[d->note_count - 1];
+    note = d->notes->note;
     note += bend;
 
     d->pitch = 440 * pow(2, (note - 69.0) / 12.0);

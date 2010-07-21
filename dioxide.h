@@ -46,6 +46,11 @@ static double step_down = 0.94387431268169353;
 
 struct dioxide;
 
+struct note {
+    unsigned note;
+    struct note *next;
+};
+
 struct element {
     void (*generate)(struct dioxide *d, float *buffer, unsigned count);
     void (*adsr)(struct dioxide *d);
@@ -62,8 +67,8 @@ struct dioxide {
     double volume;
     double phase;
     float pitch;
-    unsigned notes[16];
-    unsigned note_count;
+
+    struct note *notes;
 
     enum wheel_config pitch_wheel_config;
     signed short pitch_bend;

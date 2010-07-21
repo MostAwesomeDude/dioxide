@@ -121,7 +121,8 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
-    unsigned i, break_flag = 0;
+    struct note *note = d->notes;
+    unsigned i, repeated = 0;
 
     if (snd_seq_event_input(d->seq, &event) == -EAGAIN) {
         return;
@@ -131,47 +132,38 @@ void poll_sequencer(struct dioxide *d) {
 
     switch (type) {
         case SND_SEQ_EVENT_NOTEON:
-            if (d->note_count >= 16) {
-                printf("Warning: Too many notes held, ignoring noteon.\n");
-            } else {
-                for (i = 0; i < d->note_count; i++) {
-                    if (d->notes[i] == event->data.note.note) {
-                        break_flag = 1;
-                        break;
-                    }
-                }
-                if (break_flag) {
+            while (note) {
+                if (note->note == event->data.note.note) {
+                    repeated = 1;
                     break;
                 }
-
-                if (!d->note_count || !d->legato) {
-                    d->adsr_phase = ADSR_ATTACK;
-                    d->adsr_volume = 0.0;
-                }
-
-                d->notes[d->note_count] = event->data.note.note;
-                d->note_count++;
+                note = note->next;
             }
+
+            if (!note) {
+                note = calloc(1, sizeof(struct note));
+                note->next = d->notes;
+                d->notes = note;
+            }
+
+            if (!d->legato) {
+                d->adsr_phase = ADSR_ATTACK;
+                d->adsr_volume = 0.0;
+            }
+
+            note->note = event->data.note.note;
 
             break;
         case SND_SEQ_EVENT_NOTEOFF:
-            if (!d->note_count) {
-                break;
-            }
-
-            for (i = 0; i < d->note_count; i++) {
-                if (d->notes[i] == event->data.note.note) {
+            while (note) {
+                if (note->note == event->data.note.note) {
                     break;
                 }
-            }
-            d->note_count--;
-            for (i; i < d->note_count; i++) {
-                d->notes[i] = d->notes[i + 1];
+                note = note->next;
             }
 
-            if (!d->note_count) {
-                d->adsr_phase = ADSR_RELEASE;
-            } else if (!d->legato) {
+            d->adsr_phase = ADSR_RELEASE;
+            if (!d->legato) {
                 d->adsr_phase = ADSR_ATTACK;
                 d->adsr_volume = 0.0;
             }
@@ -196,7 +188,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
     }
 
-    if (d->note_count || d->adsr_volume) {
+    if (d->adsr_volume) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);
