@@ -80,7 +80,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     signed short short_temp, *buf = (signed short*)stream;
     struct timeval then, now;
     unsigned long timediff;
-    struct ladspa_plugin *plugin;
+    struct ladspa_plugin *plugin = d->plugin_chain;
 
     gettimeofday(&then, NULL);
 
@@ -91,10 +91,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
     /* Update pitch only once per buffer. */
     update_pitch(d);
 
-    plugin = d->plugin_chain;
+    generate_uranium(d, samples, len);
 
-    plugin->desc->connect_port(plugin->handle, plugin->output, samples);
-    plugin->desc->run(plugin->handle, len);
 #if 0
     printf("initialsamples = [\n");
     for (i = 0; i < len; i++) {
