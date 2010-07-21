@@ -98,3 +98,5 @@ struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
 void setup_sequencer(struct dioxide *d);
 void poll_sequencer(struct dioxide *d);
 void solicit_connections(struct dioxide *d);
+
+void generate_uranium(struct dioxide *d, float *buffer, unsigned count);

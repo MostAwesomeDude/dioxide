@@ -192,6 +192,12 @@ void update_adsr(struct dioxide *d) {
         default:
             break;
     }
+
+    if (d->adsr_volume) {
+        SDL_PauseAudio(0);
+    } else {
+        SDL_PauseAudio(1);
+    }
 }
 
 void update_pitch(struct dioxide *d) {
@@ -255,7 +261,7 @@ int main() {
     hook_plugins(d);
     setup_sequencer(d);
 
-    SDL_PauseAudio(0);
+    SDL_PauseAudio(1);
 
     while (!time_to_quit) {
         poll_sequencer(d);
