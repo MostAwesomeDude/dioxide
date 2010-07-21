@@ -70,7 +70,6 @@ struct dioxide {
 
     float *front_buffer, *back_buffer;
 
-    int gliss;
     int legato;
 
     float chorus_delay;

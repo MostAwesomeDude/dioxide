@@ -198,17 +198,7 @@ void update_pitch(struct dioxide *d) {
     note = d->notes[d->note_count - 1];
     note += bend;
 
-    target_pitch = 440 * pow(2, (note - 69.0) / 12.0);
-
-    ratio = target_pitch / d->pitch;
-
-    if ((d->pitch < 20) ||
-        ((step_up > ratio) && (ratio > step_down)) ||
-        !d->gliss) {
-        d->pitch = target_pitch;
-    } else {
-        d->pitch = pow(M_E, log(d->pitch) + log(ratio) * 0.5);
-    }
+    d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
 }
 
 int main() {
