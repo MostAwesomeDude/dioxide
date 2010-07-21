@@ -9,7 +9,6 @@ void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
 
     double step, accumulator;
     unsigned i, j, max_j;
-    struct ladspa_plugin *plugin = d->plugin_chain;
 
     step = 2 * M_PI * d->pitch * d->inverse_sample_rate;
 
