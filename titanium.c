@@ -44,7 +44,7 @@ void generate_titanium(struct dioxide *d, struct note *note, float *buffer, unsi
             note->phase -= 2 * M_PI;
         }
 
-        *buffer = accumulator * note->adsr_volume;
+        *buffer += accumulator * note->adsr_volume;
         buffer++;
     }
 }
