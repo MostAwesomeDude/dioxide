@@ -150,6 +150,8 @@ void poll_sequencer(struct dioxide *d) {
             note->adsr_phase = ADSR_ATTACK;
             note->adsr_volume = 0.0;
 
+            SDL_PauseAudio(0);
+
             break;
         case SND_SEQ_EVENT_NOTEOFF:
             while (note) {
@@ -179,12 +181,6 @@ void poll_sequencer(struct dioxide *d) {
         default:
             printf("Got event type %u\n", type);
             break;
-    }
-
-    if (d->volume) {
-        SDL_PauseAudio(0);
-    } else {
-        SDL_PauseAudio(1);
     }
 }
 

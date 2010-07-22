@@ -86,6 +86,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     gettimeofday(&then, NULL);
 
+    if (!d->notes) {
+        SDL_PauseAudio(1);
+    }
+
     /* Treat len and buf as counting shorts, not bytes.
      * Avoids cognitive dissonance in later code. */
     len /= 2;
