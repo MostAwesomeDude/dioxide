@@ -30,36 +30,39 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.param) {
         /* C1 */
         case 74:
-            d->chorus_delay = scale_pot_log_float(control.value, 2.5, 40);
+            d->drawbars[0] = scale_pot_long(control.value, 0, 8);
             break;
         /* C2 */
         case 71:
-            d->phaser_rate = scale_pot_float(control.value, 0, 1);
-            d->phaser_depth = scale_pot_float(control.value, 0, 1);
+            d->drawbars[1] = scale_pot_long(control.value, 0, 8);
             break;
         /* C3 */
         case 91:
-            d->phaser_spread = scale_pot_float(control.value, 0, 1.5708);
+            d->drawbars[2] = scale_pot_long(control.value, 0, 8);
             break;
         /* C4 */
         case 93:
-            d->phaser_feedback = scale_pot_float(control.value, 0, 0.999);
+            d->drawbars[3] = scale_pot_long(control.value, 0, 8);
             break;
         /* C5 */
         case 73:
+            d->drawbars[4] = scale_pot_long(control.value, 0, 8);
             break;
         /* C6 */
         case 72:
+            d->drawbars[5] = scale_pot_long(control.value, 0, 8);
             break;
         /* C7 */
         case 5:
+            d->drawbars[6] = scale_pot_long(control.value, 0, 8);
             break;
         /* C8 */
         case 84:
+            d->drawbars[7] = scale_pot_long(control.value, 0, 8);
             break;
         /* C9 */
         case 7:
-            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
+            d->drawbars[8] = scale_pot_long(control.value, 0, 8);
             break;
         /* C10 */
         case 75:
@@ -78,12 +81,21 @@ void handle_controller(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C14 */
         case 10:
+            d->chorus_delay = scale_pot_log_float(control.value, 2.5, 40);
+            d->lpf_resonance = scale_pot_float(control.value, 0.0, 4.0);
             break;
         /* C15 */
         case 77:
+            d->phaser_rate = scale_pot_float(control.value, 0, 1);
+            d->phaser_depth = scale_pot_float(control.value, 0, 1);
             break;
         /* C16 */
         case 78:
+            d->phaser_spread = scale_pot_float(control.value, 0, 1.5708);
+            break;
+        /* C17 */
+        case 79:
+            d->phaser_feedback = scale_pot_float(control.value, 0, 0.999);
             break;
         /* C34 */
         case 1:

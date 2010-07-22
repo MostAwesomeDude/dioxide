@@ -94,6 +94,8 @@ struct dioxide {
     float decay_time;
     float release_time;
 
+    short drawbars[9];
+
     struct ladspa_plugin *available_plugins;
     struct ladspa_plugin *plugin_chain;
 

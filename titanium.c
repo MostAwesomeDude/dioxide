@@ -6,37 +6,41 @@
 /* These are technically twice the correct frequency. It makes the maths a bit
  * easier conceptually. */
 static float drawbar_pitches[9] = {
+    0.5,
+    1.5,
     1,
-    3,
     2,
+    3,
     4,
+    5,
     6,
     8,
-    10,
-    12,
-    16,
 };
 
 void generate_titanium(struct dioxide *d, struct note *note, float *buffer, unsigned size)
 {
-    double step, pitch, accumulator;
-    unsigned i, j, max_j;
+    double step, accumulator;
+    unsigned i, j, attenuation;
 
-    /* Halve the normal step and pitch, to compensate for the drawbars being
-     * raised an octave. */
-    step = M_PI * note->pitch * d->inverse_sample_rate;
-    pitch = note->pitch * 0.5;
+    step = 2 * M_PI * note->pitch * d->inverse_sample_rate;
 
     for (i = 0; i < size; i++) {
         accumulator = 0;
+        attenuation = 0;
 
         d->metal->adsr(d, note);
 
         for (j = 0; j < 9; j++) {
-            accumulator += sin(note->phase * j);
+            if (d->drawbars[j]) {
+                attenuation++;
+                accumulator += (1.0/8.0) * d->drawbars[j] *
+                    sin(note->phase * drawbar_pitches[j]);
+            }
         }
 
-        accumulator /= 9;
+        if (attenuation) {
+            accumulator /= attenuation;
+        }
 
         note->phase += step;
 
@@ -57,11 +61,8 @@ void adsr_titanium(struct dioxide *d, struct note *note) {
                 note->adsr_volume += d->inverse_sample_rate / d->attack_time;
             } else {
                 note->adsr_volume = peak;
-                note->adsr_phase = ADSR_DECAY;
+                note->adsr_phase = ADSR_SUSTAIN;
             }
-            break;
-        case ADSR_DECAY:
-            note->adsr_phase = ADSR_SUSTAIN;
             break;
         case ADSR_SUSTAIN:
             break;

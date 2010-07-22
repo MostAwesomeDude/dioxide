@@ -61,7 +61,7 @@ void setup_sound(struct dioxide *d) {
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
 
-    d->metal = &uranium;
+    d->metal = &titanium;
 }
 
 void close_sound(struct dioxide *d) {
@@ -157,8 +157,10 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         if (accumulator > 32767) {
             accumulator = 32767;
+            printf("Clipping high\n");
         } else if (accumulator < -32768) {
             accumulator = -32768;
+            printf("Clipping low\n");
         }
 
         short_temp = (signed short)accumulator;
