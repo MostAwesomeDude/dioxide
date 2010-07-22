@@ -48,12 +48,15 @@ struct dioxide;
 
 struct note {
     unsigned note;
+    enum adsr adsr_phase;
+    float adsr_volume;
+
     struct note *next;
 };
 
 struct element {
     void (*generate)(struct dioxide *d, float *buffer, unsigned count);
-    void (*adsr)(struct dioxide *d);
+    void (*adsr)(struct dioxide *d, struct note *note);
 };
 
 struct dioxide {
@@ -87,8 +90,6 @@ struct dioxide {
     float lpf_cutoff;
     float lpf_resonance;
 
-    enum adsr adsr_phase;
-    float adsr_volume;
     float attack_time;
     float decay_time;
     float release_time;

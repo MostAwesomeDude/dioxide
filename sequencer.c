@@ -146,12 +146,9 @@ void poll_sequencer(struct dioxide *d) {
                 d->notes = note;
             }
 
-            if (!d->legato) {
-                d->adsr_phase = ADSR_ATTACK;
-                d->adsr_volume = 0.0;
-            }
-
             note->note = event->data.note.note;
+            note->adsr_phase = ADSR_ATTACK;
+            note->adsr_volume = 0.0;
 
             break;
         case SND_SEQ_EVENT_NOTEOFF:
@@ -162,11 +159,7 @@ void poll_sequencer(struct dioxide *d) {
                 note = note->next;
             }
 
-            d->adsr_phase = ADSR_RELEASE;
-            if (!d->legato) {
-                d->adsr_phase = ADSR_ATTACK;
-                d->adsr_volume = 0.0;
-            }
+            note->adsr_phase = ADSR_RELEASE;
 
             break;
         case SND_SEQ_EVENT_CONTROLLER:
@@ -188,7 +181,7 @@ void poll_sequencer(struct dioxide *d) {
             break;
     }
 
-    if (d->adsr_volume) {
+    if (d->volume) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);

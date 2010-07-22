@@ -131,9 +131,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
-        d->metal->adsr(d);
-
-        accumulator *= d->adsr_volume * d->volume * -32767;
+        accumulator *= d->volume * -32767;
 
         if (accumulator > 32767) {
             accumulator = 32767;
@@ -147,7 +145,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
         buf++;
     }
 
-    if (d->adsr_volume) {
+    // XXX
+    if (d->volume) {
         SDL_PauseAudio(0);
     } else {
         SDL_PauseAudio(1);

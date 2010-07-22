@@ -15,6 +15,8 @@ void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
     for (i = 0; i < size; i++) {
         accumulator = 0;
 
+        d->metal->adsr(d, d->notes);
+
         /* Weird things I've discovered.
          * BLITs aren't necessary. This is strictly additive.
          *
@@ -47,34 +49,34 @@ void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
     }
 }
 
-void adsr_uranium(struct dioxide *d) {
+void adsr_uranium(struct dioxide *d, struct note *note) {
     static float peak = 1.0, sustain = 0.5;
-    switch (d->adsr_phase) {
+    switch (note->adsr_phase) {
         case ADSR_ATTACK:
-            if (d->adsr_volume < peak) {
-                d->adsr_volume += d->inverse_sample_rate / d->attack_time;
+            if (note->adsr_volume < peak) {
+                note->adsr_volume += d->inverse_sample_rate / d->attack_time;
             } else {
-                d->adsr_volume = peak;
-                d->adsr_phase = ADSR_DECAY;
+                note->adsr_volume = peak;
+                note->adsr_phase = ADSR_DECAY;
             }
             break;
         case ADSR_DECAY:
-            if (d->adsr_volume > sustain) {
-                d->adsr_volume -= (peak - sustain) * d->inverse_sample_rate
+            if (note->adsr_volume > sustain) {
+                note->adsr_volume -= (peak - sustain) * d->inverse_sample_rate
                     / d->decay_time;
             } else {
-                d->adsr_volume = sustain;
-                d->adsr_phase = ADSR_SUSTAIN;
+                note->adsr_volume = sustain;
+                note->adsr_phase = ADSR_SUSTAIN;
             }
             break;
         case ADSR_SUSTAIN:
             break;
         case ADSR_RELEASE:
-            if (d->adsr_volume > 0.0) {
-                d->adsr_volume -= sustain * d->inverse_sample_rate
+            if (note->adsr_volume > 0.0) {
+                note->adsr_volume -= sustain * d->inverse_sample_rate
                     / d->release_time;
             } else {
-                d->adsr_volume = 0.0;
+                note->adsr_volume = 0.0;
             }
             break;
         default:
