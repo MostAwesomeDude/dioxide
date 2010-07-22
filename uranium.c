@@ -3,19 +3,19 @@
 
 #include "dioxide.h"
 
-void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
+void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsigned size)
 {
     static double phase = 0.0;
 
     double step, accumulator;
     unsigned i, j, max_j;
 
-    step = 2 * M_PI * d->pitch * d->inverse_sample_rate;
+    step = 2 * M_PI * note->pitch * d->inverse_sample_rate;
 
     for (i = 0; i < size; i++) {
         accumulator = 0;
 
-        d->metal->adsr(d, d->notes);
+        d->metal->adsr(d, note);
 
         /* Weird things I've discovered.
          * BLITs aren't necessary. This is strictly additive.
@@ -27,7 +27,7 @@ void generate_uranium(struct dioxide *d, float *buffer, unsigned size)
          * If the number of additions is even, everything goes to shit. This
          * helped: http://www.music.mcgill.ca/~gary/307/week5/bandlimited.html
          */
-        max_j = d->spec.freq / d->pitch / 3;
+        max_j = d->spec.freq / note->pitch / 3;
         if (max_j > 129) {
             max_j = 129;
         } else if (!(max_j % 2)) {

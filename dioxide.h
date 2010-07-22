@@ -48,6 +48,8 @@ struct dioxide;
 
 struct note {
     unsigned note;
+    float pitch;
+
     enum adsr adsr_phase;
     float adsr_volume;
 
@@ -55,7 +57,7 @@ struct note {
 };
 
 struct element {
-    void (*generate)(struct dioxide *d, float *buffer, unsigned count);
+    void (*generate)(struct dioxide *d, struct note *note, float *buffer, unsigned count);
     void (*adsr)(struct dioxide *d, struct note *note);
 };
 
@@ -69,7 +71,6 @@ struct dioxide {
 
     double volume;
     double phase;
-    float pitch;
 
     struct note *notes;
 

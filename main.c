@@ -74,6 +74,7 @@ void close_sound(struct dioxide *d) {
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
+    struct note *note = d->notes;
     double accumulator;
     unsigned i;
     int retval;
@@ -92,7 +93,12 @@ void write_sound(void *private, Uint8 *stream, int len) {
     /* Update pitch only once per buffer. */
     update_pitch(d);
 
-    d->metal->generate(d, samples, len);
+    memset(samples, 0, len * sizeof(float));
+
+    while (note) {
+        d->metal->generate(d, note, samples, len);
+        note = note->next;
+    }
 
 #if 0
     printf("initialsamples = [\n");
@@ -101,9 +107,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     }
     printf("]\n");
 #endif
-    while (plugin->next) {
-        plugin = plugin->next;
-
+    while (plugin) {
         /* Switch the names of the buffers, so that "samples" is always the
          * buffer being rendered to. */
         if (LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties)) {
@@ -126,6 +130,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
         }
         printf("]\n");
 #endif
+
+        plugin = plugin->next;
     }
 
     for (i = 0; i < len; i++) {
@@ -167,37 +173,36 @@ void write_sound(void *private, Uint8 *stream, int len) {
 }
 
 void update_pitch(struct dioxide *d) {
-    double note, bend, target_pitch, ratio;
+    struct note *note = d->notes;
+    double midi, bend, target_pitch, ratio;
 
-    if (!d->notes) {
-        return;
-    }
-
-    switch (d->pitch_wheel_config) {
-        case WHEEL_TRADITIONAL:
-            bend = d->pitch_bend * (2.0 / 8192.0);
-            break;
-        case WHEEL_RUDESS:
-            /* Split the pitch wheel into an upper and lower range. */
-            if (d->pitch_bend >= 0) {
+    while (note) {
+        switch (d->pitch_wheel_config) {
+            case WHEEL_TRADITIONAL:
                 bend = d->pitch_bend * (2.0 / 8192.0);
-            } else {
-                bend = d->pitch_bend * (12.0 / 8192.0);
-            }
-            break;
-        case WHEEL_DIVEBOMB:
-            if (d->pitch_bend >= 0) {
-                bend = d->pitch_bend * (24.0 / 8192.0);
-            } else {
-                bend = d->pitch_bend * (36.0 / 8192.0);
-            }
-            break;
+                break;
+            case WHEEL_RUDESS:
+                /* Split the pitch wheel into an upper and lower range. */
+                if (d->pitch_bend >= 0) {
+                    bend = d->pitch_bend * (2.0 / 8192.0);
+                } else {
+                    bend = d->pitch_bend * (12.0 / 8192.0);
+                }
+                break;
+            case WHEEL_DIVEBOMB:
+                if (d->pitch_bend >= 0) {
+                    bend = d->pitch_bend * (24.0 / 8192.0);
+                } else {
+                    bend = d->pitch_bend * (36.0 / 8192.0);
+                }
+                break;
+        }
+
+        midi = note->note + bend;
+
+        note->pitch = 440 * pow(2, (midi - 69.0) / 12.0);
+        note = note->next;
     }
-
-    note = d->notes->note;
-    note += bend;
-
-    d->pitch = 440 * pow(2, (note - 69.0) / 12.0);
 }
 
 int main() {

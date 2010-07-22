@@ -150,16 +150,6 @@ struct ladspa_plugin* find_plugin_by_id(struct ladspa_plugin *plugin,
 void hook_plugins(struct dioxide *d) {
     struct ladspa_plugin *plugin;
 
-    /* Sawtooth */
-    plugin = find_plugin_by_id(d->plugin_chain, 1642);
-
-    if (!plugin) {
-        printf("Couldn't set up sawtooth!\n");
-        exit(EXIT_FAILURE);
-    } else {
-        plugin->desc->connect_port(plugin->handle, 0, &d->pitch);
-    }
-
     /* Phaser */
     plugin = find_plugin_by_id(d->plugin_chain, 2586);
 

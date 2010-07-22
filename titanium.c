@@ -17,7 +17,7 @@ static float drawbar_pitches[9] = {
     16,
 };
 
-void generate_titanium(struct dioxide *d, float *buffer, unsigned size)
+void generate_titanium(struct dioxide *d, struct note *note, float *buffer, unsigned size)
 {
     static double phase = 0.0;
 
@@ -26,13 +26,13 @@ void generate_titanium(struct dioxide *d, float *buffer, unsigned size)
 
     /* Halve the normal step and pitch, to compensate for the drawbars being
      * raised an octave. */
-    step = M_PI * d->pitch * d->inverse_sample_rate;
-    pitch = d->pitch * 0.5;
+    step = M_PI * note->pitch * d->inverse_sample_rate;
+    pitch = note->pitch * 0.5;
 
     for (i = 0; i < size; i++) {
         accumulator = 0;
 
-        d->metal->adsr(d, d->notes);
+        d->metal->adsr(d, note);
 
         for (j = 0; j < 9; j++) {
             accumulator += sin(phase * j);
