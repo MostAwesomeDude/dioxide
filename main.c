@@ -74,7 +74,7 @@ void close_sound(struct dioxide *d) {
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
-    struct note *note, *next_note;
+    struct note *note, *prev_note;
     double accumulator;
     unsigned i;
     int retval;
@@ -89,6 +89,14 @@ void write_sound(void *private, Uint8 *stream, int len) {
     if (!d->notes->next) {
         SDL_PauseAudio(1);
         return;
+    }
+
+    for (prev_note = d->notes, note = prev_note->next; note; prev_note = note, note = note->next) {
+        if (note->adsr_volume == 0.0 && note->adsr_phase == ADSR_RELEASE) {
+            prev_note->next = note->next;
+            free(note);
+            note = prev_note;
+        }
     }
 
     if (!d->notes->next) {
