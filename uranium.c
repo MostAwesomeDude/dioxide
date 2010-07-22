@@ -44,7 +44,7 @@ void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsig
             phase -= 2 * M_PI;
         }
 
-        *buffer = accumulator;
+        *buffer = accumulator * note->adsr_volume;
         buffer++;
     }
 }
