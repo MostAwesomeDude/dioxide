@@ -80,8 +80,6 @@ struct dioxide {
 
     float *front_buffer, *back_buffer;
 
-    int legato;
-
     float chorus_delay;
 
     float phaser_rate;

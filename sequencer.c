@@ -108,7 +108,6 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
             break;
         /* C19 */
         case 1:
-            d->legato = !d->legato;
             break;
         /* C20 */
         case 2:
