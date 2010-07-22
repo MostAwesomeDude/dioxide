@@ -121,7 +121,7 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
-    struct note *note = d->notes;
+    struct note *note = d->notes->next;
     unsigned i, repeated = 0;
 
     if (snd_seq_event_input(d->seq, &event) == -EAGAIN) {
@@ -142,8 +142,8 @@ void poll_sequencer(struct dioxide *d) {
 
             if (!note) {
                 note = calloc(1, sizeof(struct note));
-                note->next = d->notes;
-                d->notes = note;
+                note->next = d->notes->next;
+                d->notes->next = note;
             }
 
             note->note = event->data.note.note;

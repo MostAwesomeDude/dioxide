@@ -74,7 +74,7 @@ void close_sound(struct dioxide *d) {
 
 void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
-    struct note *note = d->notes;
+    struct note *note, *next_note;
     double accumulator;
     unsigned i;
     int retval;
@@ -86,8 +86,14 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     gettimeofday(&then, NULL);
 
-    if (!d->notes) {
+    if (!d->notes->next) {
         SDL_PauseAudio(1);
+        return;
+    }
+
+    if (!d->notes->next) {
+        SDL_PauseAudio(1);
+        return;
     }
 
     /* Treat len and buf as counting shorts, not bytes.
@@ -99,9 +105,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     memset(samples, 0, len * sizeof(float));
 
-    while (note) {
+    for (note = d->notes->next; note; note = note->next) {
         d->metal->generate(d, note, samples, len);
-        note = note->next;
     }
 
 #if 0
@@ -175,7 +180,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
 }
 
 void update_pitch(struct dioxide *d) {
-    struct note *note = d->notes;
+    struct note *note = d->notes->next;
     double midi, bend, target_pitch, ratio;
 
     while (note) {
@@ -209,6 +214,7 @@ void update_pitch(struct dioxide *d) {
 
 int main() {
     struct dioxide *d = calloc(1, sizeof(struct dioxide));
+    d->notes = calloc(1, sizeof(struct note));
     struct itimerval timer;
     int retval;
 
@@ -239,6 +245,7 @@ int main() {
 
     retval = snd_seq_close(d->seq);
 
+    free(d->notes);
     free(d);
     exit(retval);
 }
