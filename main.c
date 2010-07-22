@@ -61,7 +61,7 @@ void setup_sound(struct dioxide *d) {
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
 
-    d->metal = &uranium;
+    d->metal = &titanium;
 }
 
 void close_sound(struct dioxide *d) {
@@ -76,7 +76,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     struct dioxide *d = private;
     struct note *note, *prev_note;
     double accumulator;
-    unsigned i;
+    unsigned i, polyphony = 0;
     int retval;
     float *samples = d->front_buffer, *backburner = d->back_buffer, *ftemp;
     signed short short_temp, *buf = (signed short*)stream;
@@ -115,6 +115,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
     for (note = d->notes->next; note; note = note->next) {
         d->metal->generate(d, note, samples, len);
+        polyphony++;
     }
 
 #if 0
@@ -152,7 +153,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
-        accumulator *= d->volume * -32767;
+        accumulator *= d->volume * -32767 / polyphony;
 
         if (accumulator > 32767) {
             accumulator = 32767;

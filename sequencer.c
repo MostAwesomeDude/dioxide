@@ -121,7 +121,7 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
 void poll_sequencer(struct dioxide *d) {
     snd_seq_event_t *event;
     enum snd_seq_event_type type;
-    struct note *note = d->notes->next;
+    struct note *note;
     unsigned i, repeated = 0;
 
     if (snd_seq_event_input(d->seq, &event) == -EAGAIN) {
@@ -132,12 +132,11 @@ void poll_sequencer(struct dioxide *d) {
 
     switch (type) {
         case SND_SEQ_EVENT_NOTEON:
-            while (note) {
+            for (note = d->notes->next; note; note = note->next) {
                 if (note->note == event->data.note.note) {
                     repeated = 1;
                     break;
                 }
-                note = note->next;
             }
 
             if (!note) {
@@ -154,14 +153,11 @@ void poll_sequencer(struct dioxide *d) {
 
             break;
         case SND_SEQ_EVENT_NOTEOFF:
-            while (note) {
+            for (note = d->notes->next; note; note = note->next) {
                 if (note->note == event->data.note.note) {
-                    break;
+                    note->adsr_phase = ADSR_RELEASE;
                 }
-                note = note->next;
             }
-
-            note->adsr_phase = ADSR_RELEASE;
 
             break;
         case SND_SEQ_EVENT_CONTROLLER:
