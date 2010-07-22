@@ -82,7 +82,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     signed short short_temp, *buf = (signed short*)stream;
     struct timeval then, now;
     unsigned long timediff;
-    struct ladspa_plugin *plugin = d->plugin_chain;
+    struct ladspa_plugin *plugin = NULL;
 
     gettimeofday(&then, NULL);
 
@@ -111,7 +111,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     }
     printf("]\n");
 #endif
-    while (plugin) {
+    for (plugin = d->plugin_chain; plugin; plugin = plugin->next) {
         /* Switch the names of the buffers, so that "samples" is always the
          * buffer being rendered to. */
         if (LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties)) {
@@ -134,8 +134,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
         }
         printf("]\n");
 #endif
-
-        plugin = plugin->next;
     }
 
     for (i = 0; i < len; i++) {

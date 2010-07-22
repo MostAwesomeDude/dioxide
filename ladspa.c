@@ -97,12 +97,6 @@ void setup_plugins(struct dioxide *d) {
     open_plugin(d, "sawtooth_1641.so");
     open_plugin(d, "lp4pole_1671.so");
 
-    /* Sawtooth generator */
-    plugin = select_plugin(d, 1642);
-    if (plugin) {
-        plugin->output = 1;
-    }
-
     /* Chorus */
     plugin = select_plugin(d, 2583);
     if (plugin) {
