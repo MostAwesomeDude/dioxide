@@ -167,13 +167,6 @@ void write_sound(void *private, Uint8 *stream, int len) {
         buf++;
     }
 
-    // XXX
-    if (d->volume) {
-        SDL_PauseAudio(0);
-    } else {
-        SDL_PauseAudio(1);
-    }
-
     gettimeofday(&now, NULL);
 
     while (now.tv_sec != then.tv_sec) {
