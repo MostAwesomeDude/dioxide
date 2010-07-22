@@ -61,7 +61,7 @@ void setup_sound(struct dioxide *d) {
     d->front_buffer = malloc(actual.samples * sizeof(float));
     d->back_buffer = malloc(actual.samples * sizeof(float));
 
-    d->metal = &titanium;
+    d->metal = &uranium;
 }
 
 void close_sound(struct dioxide *d) {

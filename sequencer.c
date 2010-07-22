@@ -100,6 +100,11 @@ void handle_program_change(struct dioxide *d, snd_seq_ev_ctrl_t control) {
     switch (control.value) {
         /* C18 */
         case 0:
+            if (d->metal == &uranium) {
+                d->metal = &titanium;
+            } else if (d->metal == &titanium) {
+                d->metal = &uranium;
+            }
             break;
         /* C19 */
         case 1:
