@@ -5,8 +5,6 @@
 
 void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsigned size)
 {
-    static double phase = 0.0;
-
     double step, accumulator;
     unsigned i, j, max_j;
 
@@ -35,13 +33,13 @@ void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsig
         }
 
         for (j = 1; j < max_j; j++) {
-            accumulator += sin(phase * j) / j;
+            accumulator += sin(note->phase * j) / j;
         }
 
-        phase += step;
+        note->phase += step;
 
-        while (phase > 2 * M_PI) {
-            phase -= 2 * M_PI;
+        while (note->phase > 2 * M_PI) {
+            note->phase -= 2 * M_PI;
         }
 
         *buffer = accumulator * note->adsr_volume;

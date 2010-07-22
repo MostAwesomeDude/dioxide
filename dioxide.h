@@ -49,6 +49,7 @@ struct dioxide;
 struct note {
     unsigned note;
     float pitch;
+    double phase;
 
     enum adsr adsr_phase;
     float adsr_volume;
