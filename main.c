@@ -157,10 +157,8 @@ void write_sound(void *private, Uint8 *stream, int len) {
 
         if (accumulator > 32767) {
             accumulator = 32767;
-            printf("Clipping high\n");
         } else if (accumulator < -32768) {
             accumulator = -32768;
-            printf("Clipping low\n");
         }
 
         short_temp = (signed short)accumulator;
