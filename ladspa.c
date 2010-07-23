@@ -94,7 +94,6 @@ void setup_plugins(struct dioxide *d) {
     unsigned i = 1;
 
     open_plugin(d, "caps.so");
-    open_plugin(d, "sawtooth_1641.so");
     open_plugin(d, "lp4pole_1671.so");
 
     /* Chorus */

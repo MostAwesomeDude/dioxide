@@ -1,7 +1,5 @@
 #include <asoundlib.h>
 
-#include <fftw3.h>
-
 #include <ladspa.h>
 
 #include "SDL.h"

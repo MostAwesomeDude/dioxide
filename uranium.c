@@ -52,7 +52,7 @@ void adsr_uranium(struct dioxide *d, struct note *note) {
     switch (note->adsr_phase) {
         case ADSR_ATTACK:
             if (note->adsr_volume < peak) {
-                note->adsr_volume += d->inverse_sample_rate / d->attack_time;
+                note->adsr_volume += d->inverse_sample_rate / 0.0001;
             } else {
                 note->adsr_volume = peak;
                 note->adsr_phase = ADSR_DECAY;
