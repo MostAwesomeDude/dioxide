@@ -3,17 +3,31 @@
 
 #include "dioxide.h"
 
+static struct lfo growl = {
+    .rate = 80,
+    .center = 1,
+    /* six_cents - 1 */
+    .amplitude = 0.0034717485095028,
+};
+
 void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsigned size)
 {
-    double step, accumulator;
+    double step, growl_adjustment, pitch, accumulator;
     unsigned i, j, max_j;
-
-    step = 2 * M_PI * note->pitch * d->inverse_sample_rate;
 
     for (i = 0; i < size; i++) {
         accumulator = 0;
 
         d->metal->adsr(d, note);
+
+        pitch = note->pitch;
+
+        if (note->adsr_phase < ADSR_SUSTAIN) {
+            growl_adjustment = step_lfo(d, &growl, 1);
+            pitch *= growl_adjustment;
+        }
+
+        step = 2 * M_PI * pitch * d->inverse_sample_rate;
 
         /* Weird things I've discovered.
          * BLITs aren't necessary. This is strictly additive.
@@ -48,11 +62,11 @@ void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsig
 }
 
 void adsr_uranium(struct dioxide *d, struct note *note) {
-    static float peak = 1.0, sustain = 0.5;
+    static float peak = 1.0, sustain = 0.4;
     switch (note->adsr_phase) {
         case ADSR_ATTACK:
             if (note->adsr_volume < peak) {
-                note->adsr_volume += d->inverse_sample_rate / 0.0001;
+                note->adsr_volume += d->inverse_sample_rate / d->attack_time;
             } else {
                 note->adsr_volume = peak;
                 note->adsr_phase = ADSR_DECAY;
