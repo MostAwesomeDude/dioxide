@@ -153,7 +153,7 @@ void write_sound(void *private, Uint8 *stream, int len) {
     for (i = 0; i < len; i++) {
         accumulator = samples[i];
 
-        accumulator *= d->volume * -32767 / polyphony;
+        accumulator *= d->volume * -32767;
 
         if (accumulator > 32767) {
             accumulator = 32767;
