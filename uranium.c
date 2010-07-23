@@ -3,7 +3,7 @@
 
 #include "dioxide.h"
 
-static struct lfo growl = {
+static struct lfo growlbrato = {
     .rate = 80,
     .center = 1,
     /* six_cents - 1 */
@@ -20,12 +20,13 @@ void generate_uranium(struct dioxide *d, struct note *note, float *buffer, unsig
 
         d->metal->adsr(d, note);
 
-        pitch = note->pitch;
-
         if (note->adsr_phase < ADSR_SUSTAIN) {
-            growl_adjustment = step_lfo(d, &growl, 1);
-            pitch *= growl_adjustment;
+            growlbrato.rate = 80;
+        } else {
+            growlbrato.rate = 5;
         }
+
+        pitch = note->pitch * step_lfo(d, &growlbrato, 1);
 
         step = 2 * M_PI * pitch * d->inverse_sample_rate;
 
